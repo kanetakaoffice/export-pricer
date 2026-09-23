@@ -98,9 +98,11 @@
   }
 
   header.topbar {
-    position: sticky;
-    top: env(safe-area-inset-top, 0px);
-    z-index: 20;
+    /* Not sticky/fixed on purpose: in iOS standalone (installed-app) mode,
+       pinning this in place while scrolling covered the first card below it
+       (デフォルト設定) right after launch. Scrolling with it now avoids that,
+       and it still clears the status bar / notch via the safe-area padding
+       below on first paint. */
     background: var(--bg);
     padding-top: calc(env(safe-area-inset-top, 0px) + 18px);
     padding-bottom: 12px;
@@ -1420,7 +1422,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   function guessEnglishName(raw) {
     if (!raw) return '';
     var s = raw;
-    s = s.replace(/[\[［]([^\]］]*?)用[\]／]/g, function (_, inner) {
+    s = s.replace(/[\[［]([^\]／]*?)用[\]／]/g, function (_, inner) {
       return '(for ' + janNameTranslateTerms(inner) + ' Mount)';
     });
     // Same "<brand>用" mount suffix, but written bare (no brackets) — e.g.
