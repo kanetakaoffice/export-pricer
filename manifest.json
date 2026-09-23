@@ -1,11 +1,10 @@
 {
-  "name": "Export Pricer",
+  "name": "KANETAKA Export Pricer",
   "short_name": "ExportPricer",
   "description": "海外向け商品の価格提案ツール",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#f4f0e7",
   "theme_color": "#a8631d",
   "icons": [
