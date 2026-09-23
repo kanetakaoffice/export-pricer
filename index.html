@@ -225,6 +225,52 @@
     outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
+  .name-field { position: relative; }
+  .name-suggest {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 260px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+  .name-suggest.open { display: block; }
+  .name-suggest-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    appearance: none;
+    border: none;
+    background: none;
+    font: inherit;
+    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .name-suggest-item:last-child { border-bottom: none; }
+  .name-suggest-item:hover,
+  .name-suggest-item.active {
+    background: var(--surface-2);
+  }
+  .name-suggest-item mark {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    border-radius: 3px;
+  }
+  .name-suggest-empty {
+    padding: 10px 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
   .checkbox-row {
     display: flex;
     align-items: center;
@@ -880,13 +926,13 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     <section class="card add-card">
       <h2>新しい商品を追加</h2>
       <div class="add-grid">
-        <div class="field full">
+        <div class="field full name-field">
           <div class="field-label-row">
             <label for="inName">商品名（英語）</label>
             <button type="button" class="field-clear-btn" id="clearNameBtn">✕ クリア</button>
           </div>
-          <input type="text" id="inName" list="productNames" placeholder="e.g. Canon EOS R5 Body" autocomplete="off">
-          <datalist id="productNames"></datalist>
+          <input type="text" id="inName" placeholder="e.g. Canon EOS R5 Body" autocomplete="off">
+          <div class="name-suggest" id="nameSuggest"></div>
         </div>
         <div class="field">
           <label for="inBase">相場 (JPY)</label>
@@ -1053,7 +1099,9 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var scannerPriceBox = document.getElementById('scannerPriceBox');
   var janNameBox = document.getElementById('janNameBox');
   var clearNameBtn = document.getElementById('clearNameBtn');
+  var nameSuggest = document.getElementById('nameSuggest');
   var addFormTouched = false;
+  var nameSuggestActiveIdx = -1;
 
   [inMargin, inFx, inRound].forEach(function (el) {
     el.addEventListener('input', function () { addFormTouched = true; updatePreview(); });
@@ -1061,6 +1109,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   inBase.addEventListener('input', updatePreview);
   inName.addEventListener('input', function () {
     var typed = inName.value.trim().toLowerCase();
+    renderNameSuggestions(inName.value);
     if (!typed) {
       // Name field was cleared (by hand or via the clear button) — clear the
       // rest of the form too, since she's switching to a different product.
@@ -1088,7 +1137,102 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   clearNameBtn.addEventListener('click', function () {
     inName.value = '';
     inName.dispatchEvent(new Event('input'));
+    hideNameSuggestions();
     inName.focus();
+  });
+
+  // ---------- product-name suggestions (custom dropdown) ----------
+  // A native <datalist> was used here before, but iOS Safari does not show
+  // datalist suggestions for text inputs (it works fine on desktop browsers,
+  // which is why this only ever seemed to work "on the Mac"). This builds
+  // and positions the suggestion list ourselves so it works the same way on
+  // phones and on desktop.
+  function escRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function renderNameSuggestions(query) {
+    var typed = query.trim();
+    if (!typed || !state.templates.length) { hideNameSuggestions(); return; }
+    var typedLower = typed.toLowerCase();
+    var matches = state.templates.filter(function (t) {
+      return t.englishName.toLowerCase().indexOf(typedLower) !== -1;
+    });
+    // Exact match already filled the form silently — no need to show a
+    // single suggestion identical to what's already typed.
+    if (matches.length === 1 && matches[0].englishName.toLowerCase() === typedLower) {
+      hideNameSuggestions();
+      return;
+    }
+    if (!matches.length) { hideNameSuggestions(); return; }
+    matches.sort(function (a, b) {
+      var ai = a.englishName.toLowerCase().indexOf(typedLower);
+      var bi = b.englishName.toLowerCase().indexOf(typedLower);
+      if (ai !== bi) return ai - bi;
+      return a.englishName.localeCompare(b.englishName);
+    });
+    matches = matches.slice(0, 8);
+    var re = new RegExp('(' + escRegExp(typed) + ')', 'ig');
+    nameSuggestActiveIdx = -1;
+    nameSuggest.innerHTML = matches.map(function (t) {
+      var highlighted = esc(t.englishName).replace(re, '<mark>$1</mark>');
+      return '<button type="button" class="name-suggest-item" data-name="' + esc(t.englishName) + '">' + highlighted + '</button>';
+    }).join('');
+    nameSuggest.classList.add('open');
+  }
+
+  function hideNameSuggestions() {
+    nameSuggest.classList.remove('open');
+    nameSuggest.innerHTML = '';
+    nameSuggestActiveIdx = -1;
+  }
+
+  function chooseNameSuggestion(name) {
+    inName.value = name;
+    hideNameSuggestions();
+    inName.dispatchEvent(new Event('input'));
+  }
+
+  nameSuggest.addEventListener('mousedown', function (e) {
+    // mousedown (not click) so this fires before the input's blur handler
+    // hides the box — otherwise a tap on a suggestion closes it first.
+    var btn = e.target.closest('.name-suggest-item');
+    if (btn) { e.preventDefault(); chooseNameSuggestion(btn.getAttribute('data-name')); }
+  });
+  nameSuggest.addEventListener('touchstart', function (e) {
+    var btn = e.target.closest('.name-suggest-item');
+    if (btn) { e.preventDefault(); chooseNameSuggestion(btn.getAttribute('data-name')); }
+  }, { passive: false });
+
+  inName.addEventListener('focus', function () {
+    if (inName.value.trim()) renderNameSuggestions(inName.value);
+  });
+  inName.addEventListener('blur', function () {
+    // Slight delay so a tap on a suggestion (mousedown/touchstart above)
+    // still registers before the list disappears.
+    setTimeout(hideNameSuggestions, 150);
+  });
+  inName.addEventListener('keydown', function (e) {
+    var items = nameSuggest.querySelectorAll('.name-suggest-item');
+    if (!items.length || !nameSuggest.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      nameSuggestActiveIdx = Math.min(nameSuggestActiveIdx + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      nameSuggestActiveIdx = Math.max(nameSuggestActiveIdx - 1, 0);
+    } else if (e.key === 'Enter') {
+      if (nameSuggestActiveIdx >= 0 && items[nameSuggestActiveIdx]) {
+        e.preventDefault();
+        chooseNameSuggestion(items[nameSuggestActiveIdx].getAttribute('data-name'));
+      }
+      return;
+    } else if (e.key === 'Escape') {
+      hideNameSuggestions();
+      return;
+    } else {
+      return;
+    }
+    items.forEach(function (el, i) { el.classList.toggle('active', i === nameSuggestActiveIdx); });
+    items[nameSuggestActiveIdx].scrollIntoView({ block: 'nearest' });
   });
 
   function updatePreview() {
@@ -1384,7 +1528,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var tmplRegisterBtn = document.getElementById('tmplRegisterBtn');
   var tmplCopyBtn = document.getElementById('tmplCopyBtn');
   var tmplSummaryCount = document.getElementById('tmplSummaryCount');
-  var productNames = document.getElementById('productNames');
 
   // Reads the existing template (if any) so an auto-registration from the
   // add form / bulk add never wipes out a JAN code entered separately.
@@ -1438,14 +1581,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
   });
 
-  function renderProductDatalist() {
-    productNames.innerHTML = state.templates.map(function (t) {
-      return '<option value="' + esc(t.englishName) + '"></option>';
-    }).join('');
-  }
-
   function renderTemplates() {
-    renderProductDatalist();
+    if (nameSuggest.classList.contains('open')) renderNameSuggestions(inName.value);
     if (tmplSummaryCount) {
       tmplSummaryCount.textContent = state.templatesLoaded ? (state.templates.length + '件') : '…';
     }
