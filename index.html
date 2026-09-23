@@ -598,13 +598,8 @@
     padding: 6px 2px;
   }
 
-  .bulk-card h2 {
-    margin: 0 0 4px;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-muted);
-    letter-spacing: 0.02em;
-  }
+  .bulk-body { padding: 4px 16px 16px; border-top: 1px solid var(--border-soft); }
+  .bulk-body .btn-primary { margin-top: 10px; }
   .bulk-textarea {
     width: 100%;
     min-height: 96px;
@@ -623,7 +618,6 @@
     outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
-  .bulk-card .btn-primary { margin-top: 10px; }
 
   .add-card h2 {
     margin: 0 0 12px;
@@ -720,6 +714,14 @@
     background: var(--accent-soft);
     flex-wrap: wrap;
   }
+  /* These two are toggled via the `hidden` attribute/property in JS, but the
+     more specific rules above (ID + class) otherwise outrank the browser's
+     default [hidden]{display:none}, which left both permanently visible at
+     the bottom of the product list regardless of state. */
+  #clearConfirm[hidden],
+  #csvReminderConfirm[hidden] {
+    display: none !important;
+  }
 
   .item-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 
@@ -797,6 +799,7 @@
   .edit-actions { display: flex; gap: 8px; margin-top: 10px; grid-column: 1 / -1; }
   .edit-actions .btn-primary { margin-top: 0; }
 
+  .confirm-row[hidden] { display: none; }
   .confirm-row {
     display: flex;
     align-items: center;
@@ -827,6 +830,8 @@
   }
   .sync-note.err { color: var(--danger); }
 
+  .layout-grid { display: flex; flex-direction: column; gap: 16px; }
+
   @media (max-width: 420px) {
     .add-grid, .edit-grid, .settings-body { grid-template-columns: 1fr; }
     header.topbar .brand h1 { font-size: 18px; }
@@ -835,6 +840,35 @@
   @media (min-width: 820px) {
     .item-list { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
     .tmpl-list { display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* Product list stays visible in a right-hand column while the entry
+       form / CSV import / saved products stay stacked on the left, so she
+       can keep an eye on the running list while working through the form. */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      align-items: start;
+      gap: 16px;
+    }
+    .layout-grid > #csvDetails,
+    .layout-grid > .add-card,
+    .layout-grid > .bulk-details,
+    .layout-grid > .tmpl-details {
+      grid-column: 1;
+    }
+    .layout-grid > .list-section {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+      position: sticky;
+      top: 90px;
+      max-height: calc(100vh - 106px);
+      overflow-y: auto;
+    }
+    /* The item-list's own two-column mode assumes a full-width section; in
+       the narrow sidebar here a single column reads far better. */
+    .layout-grid > .list-section .item-list {
+      grid-template-columns: 1fr;
+    }
   }
 </style>
 </head>
@@ -877,124 +911,131 @@
       </div>
     </details>
 
-    <section class="card bulk-card">
-      <h2>商品を一括登録</h2>
-      <p class="tmpl-hint">毎週の入荷リストをそのまま貼り付けられます。「商品名 → JANコード✖️数量 → JPY金額」の3行1組（海外へ送る形式）をそのまま貼り付けてもOKです。スプレッドシートからコピーした「商品名<span class="mono">Tab</span>相場」の1行1商品形式にも対応しています。金額が分からない場合は「商品名<span class="mono">,</span>JANコード」だけでも登録でき、価格は前回登録済みのものを自動で引き継ぎます（見つからない場合は登録済みの商品にのみ名前とJANコードを登録します）。</p>
-      <textarea id="bulkText" class="bulk-textarea" rows="5" placeholder="Canon EOS R5 Body	185000
+    <div class="layout-grid">
+      <details class="settings" id="csvDetails">
+        <summary>
+          <span>CSVから相場を更新・新商品を登録（買取スキャナー）</span>
+          <span class="chev">&#9656;</span>
+        </summary>
+        <div class="settings-body csv-body">
+          <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
+          <div class="field full">
+            <input type="file" id="csvFileInput" accept=".csv,text/csv">
+          </div>
+          <div class="field full" id="csvStatus"></div>
+          <div class="field full" id="csvReviewArea"></div>
+          <div class="field full" id="csvNewArea"></div>
+        </div>
+      </details>
+
+      <section class="card add-card">
+        <h2>新しい商品を追加</h2>
+        <div class="add-grid">
+          <div class="field full name-field">
+            <div class="field-label-row">
+              <label for="inName">商品名（英語）</label>
+              <button type="button" class="field-clear-btn" id="clearNameBtn">✕ クリア</button>
+            </div>
+            <input type="text" id="inName" placeholder="e.g. Canon EOS R5 Body" autocomplete="off">
+            <div class="name-suggest" id="nameSuggest"></div>
+          </div>
+          <div class="field">
+            <label for="inBase">相場 (JPY)</label>
+            <input type="number" id="inBase" step="1" inputmode="numeric" placeholder="180000">
+          </div>
+          <div class="field">
+            <label for="inQty">数量</label>
+            <input type="number" id="inQty" step="1" min="1" inputmode="numeric" value="1">
+          </div>
+          <div class="field full">
+            <label for="inJan">JANコード（任意）</label>
+            <input type="text" id="inJan" inputmode="numeric" placeholder="4549292157345">
+          </div>
+          <div class="field full" id="janNameBox"></div>
+          <div class="field full" id="scannerPriceBox"></div>
+          <div class="field">
+            <label for="inMargin">マージン率 (%)</label>
+            <input type="number" id="inMargin" step="1" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="inFx">為替レート（割る数値）</label>
+            <input type="number" id="inFx" step="0.001" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label class="checkbox-row" for="inRound" style="margin-top: 22px;">
+              <input type="checkbox" id="inRound">
+              100円丸め
+            </label>
+          </div>
+          <div class="preview-line">
+            <span class="label">提案価格プレビュー</span>
+            <span class="value mono" id="previewValue">&mdash;</span>
+          </div>
+        </div>
+        <button class="btn-primary" id="addBtn">リストに追加</button>
+      </section>
+
+      <section class="list-section">
+        <div class="list-head">
+          <h2>商品リスト</h2>
+          <div class="list-head-btns">
+            <button class="btn-ghost" id="copyBtn">送付用リストをコピー</button>
+            <button class="btn-ghost" id="clearListBtn">リストをクリア</button>
+          </div>
+        </div>
+        <div id="csvReminderConfirm" class="confirm-row" hidden>
+          <span id="csvReminderText"></span>
+          <div class="btns">
+            <button class="btn-primary" id="csvReminderCopyBtn">コピーする</button>
+            <button class="btn-ghost" id="csvReminderCancelBtn">CSVを読み込みに行く</button>
+          </div>
+        </div>
+        <div id="clearConfirm" class="confirm-row" hidden>
+          <span>商品リストの◯件をすべて削除しますか？（登録済みの商品はそのまま残ります）</span>
+          <div class="btns">
+            <button class="btn-danger" id="clearYesBtn">削除する</button>
+            <button class="btn-ghost" id="clearNoBtn">キャンセル</button>
+          </div>
+        </div>
+        <div class="item-list" id="itemList"></div>
+        <div class="sync-note" id="syncNote"></div>
+      </section>
+
+      <details class="settings bulk-details" id="bulkDetails">
+        <summary>
+          <span>商品を一括登録</span>
+          <span class="chev">&#9656;</span>
+        </summary>
+        <div class="tmpl-body bulk-body">
+          <p class="tmpl-hint">毎週の入荷リストをそのまま貼り付けられます。「商品名 → JANコード✖️数量 → JPY金額」の3行1組（海外へ送る形式）をそのまま貼り付けてもOKです。スプレッドシートからコピーした「商品名<span class="mono">Tab</span>相場」の1行1商品形式にも対応しています。金額が分からない場合は「商品名<span class="mono">,</span>JANコード」だけでも登録でき、価格は前回登録済みのものを自動で引き継ぎます（見つからない場合は登録済みの商品にのみ名前とJANコードを登録します）。</p>
+          <textarea id="bulkText" class="bulk-textarea" rows="5" placeholder="Canon EOS R5 Body	185000
 Canon RF24-70mm F2.8	210000
 Sony FE 50mm F1.2 GM	160000"></textarea>
-      <button class="btn-primary" id="bulkAddBtn">まとめてリストに追加</button>
-    </section>
-
-    <details class="settings tmpl-details" id="tmplDetails">
-      <summary>
-        <span>登録済みの商品</span>
-        <span class="current mono" id="tmplSummaryCount">&hellip;</span>
-        <span class="chev">&#9656;</span>
-      </summary>
-      <div class="tmpl-body">
-        <div class="tmpl-head">
-          <button class="btn-ghost" id="tmplCopyBtn">一覧表をコピー</button>
+          <button class="btn-primary" id="bulkAddBtn">まとめてリストに追加</button>
         </div>
-        <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。相場やJANコードは入力欄から離れると自動で保存されます。「商品リストに追加」を押すと、その時点の相場で商品リストに追加されます。</p>
-        <div class="tmpl-list" id="tmplList"></div>
-        <div class="tmpl-new">
-          <input type="text" id="tmplName" placeholder="商品名（英語）">
-          <input type="number" id="tmplPrice" step="1" inputmode="numeric" placeholder="相場 (JPY)">
-          <input type="text" id="tmplJan" inputmode="numeric" placeholder="JANコード（任意）">
-          <button id="tmplRegisterBtn">商品を登録</button>
-        </div>
-      </div>
-    </details>
+      </details>
 
-    <details class="settings" id="csvDetails">
-      <summary>
-        <span>CSVから相場を更新・新商品を登録（買取スキャナー）</span>
-        <span class="chev">&#9656;</span>
-      </summary>
-      <div class="settings-body csv-body">
-        <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
-        <div class="field full">
-          <input type="file" id="csvFileInput" accept=".csv,text/csv">
-        </div>
-        <div class="field full" id="csvStatus"></div>
-        <div class="field full" id="csvReviewArea"></div>
-        <div class="field full" id="csvNewArea"></div>
-      </div>
-    </details>
-
-    <section class="card add-card">
-      <h2>新しい商品を追加</h2>
-      <div class="add-grid">
-        <div class="field full name-field">
-          <div class="field-label-row">
-            <label for="inName">商品名（英語）</label>
-            <button type="button" class="field-clear-btn" id="clearNameBtn">✕ クリア</button>
+      <details class="settings tmpl-details" id="tmplDetails">
+        <summary>
+          <span>登録済みの商品</span>
+          <span class="current mono" id="tmplSummaryCount">&hellip;</span>
+          <span class="chev">&#9656;</span>
+        </summary>
+        <div class="tmpl-body">
+          <div class="tmpl-head">
+            <button class="btn-ghost" id="tmplCopyBtn">一覧表をコピー</button>
           </div>
-          <input type="text" id="inName" placeholder="e.g. Canon EOS R5 Body" autocomplete="off">
-          <div class="name-suggest" id="nameSuggest"></div>
+          <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。相場やJANコードは入力欄から離れると自動で保存されます。「商品リストに追加」を押すと、その時点の相場で商品リストに追加されます。</p>
+          <div class="tmpl-list" id="tmplList"></div>
+          <div class="tmpl-new">
+            <input type="text" id="tmplName" placeholder="商品名（英語）">
+            <input type="number" id="tmplPrice" step="1" inputmode="numeric" placeholder="相場 (JPY)">
+            <input type="text" id="tmplJan" inputmode="numeric" placeholder="JANコード（任意）">
+            <button id="tmplRegisterBtn">商品を登録</button>
+          </div>
         </div>
-        <div class="field">
-          <label for="inBase">相場 (JPY)</label>
-          <input type="number" id="inBase" step="1" inputmode="numeric" placeholder="180000">
-        </div>
-        <div class="field">
-          <label for="inQty">数量</label>
-          <input type="number" id="inQty" step="1" min="1" inputmode="numeric" value="1">
-        </div>
-        <div class="field full">
-          <label for="inJan">JANコード（任意）</label>
-          <input type="text" id="inJan" inputmode="numeric" placeholder="4549292157345">
-        </div>
-        <div class="field full" id="janNameBox"></div>
-        <div class="field full" id="scannerPriceBox"></div>
-        <div class="field">
-          <label for="inMargin">マージン率 (%)</label>
-          <input type="number" id="inMargin" step="1" inputmode="decimal">
-        </div>
-        <div class="field">
-          <label for="inFx">為替レート（割る数値）</label>
-          <input type="number" id="inFx" step="0.001" inputmode="decimal">
-        </div>
-        <div class="field">
-          <label class="checkbox-row" for="inRound" style="margin-top: 22px;">
-            <input type="checkbox" id="inRound">
-            100円丸め
-          </label>
-        </div>
-        <div class="preview-line">
-          <span class="label">提案価格プレビュー</span>
-          <span class="value mono" id="previewValue">&mdash;</span>
-        </div>
-      </div>
-      <button class="btn-primary" id="addBtn">リストに追加</button>
-    </section>
-
-    <section class="list-section">
-      <div class="list-head">
-        <h2>商品リスト</h2>
-        <div class="list-head-btns">
-          <button class="btn-ghost" id="copyBtn">送付用リストをコピー</button>
-          <button class="btn-ghost" id="clearListBtn">リストをクリア</button>
-        </div>
-      </div>
-      <div id="csvReminderConfirm" class="confirm-row" hidden>
-        <span id="csvReminderText"></span>
-        <div class="btns">
-          <button class="btn-primary" id="csvReminderCopyBtn">コピーする</button>
-          <button class="btn-ghost" id="csvReminderCancelBtn">CSVを読み込みに行く</button>
-        </div>
-      </div>
-      <div id="clearConfirm" class="confirm-row" hidden>
-        <span>商品リストの◯件をすべて削除しますか？（登録済みの商品はそのまま残ります）</span>
-        <div class="btns">
-          <button class="btn-danger" id="clearYesBtn">削除する</button>
-          <button class="btn-ghost" id="clearNoBtn">キャンセル</button>
-        </div>
-      </div>
-      <div class="item-list" id="itemList"></div>
-      <div class="sync-note" id="syncNote"></div>
-    </section>
+      </details>
+    </div>
   </main>
 </div>
 
