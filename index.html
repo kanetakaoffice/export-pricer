@@ -342,4 +342,2444 @@
   }
   .csv-review-main { flex: 1; min-width: 0; }
   .csv-review-name { font-size: 13px; font-weight: 600; word-break: break-word; }
-  .csv-review-jan { font-size: 11px;
+  .csv-review-jan { font-size: 11px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; margin-top: 1px; }
+  .csv-review-prices { font-size: 12px; margin-top: 6px; display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+  .csv-review-old { color: var(--text-muted); text-decoration: line-through; font-family: 'IBM Plex Mono', monospace; }
+  .csv-review-new { color: var(--accent-strong); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+  .csv-review-offers { font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+  .csv-review-offers .shop { font-family: 'IBM Plex Mono', monospace; }
+
+  .csv-new-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+  .csv-new-summary { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+  .csv-new-search {
+    font: inherit;
+    font-size: 13px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .csv-new-row { flex-direction: column; align-items: stretch; }
+  .csv-new-row-top { display: flex; align-items: flex-start; gap: 10px; }
+  .csv-new-refname { font-size: 12px; color: var(--text-muted); }
+  .csv-new-name-input {
+    font: inherit;
+    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 9px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong, var(--border));
+    background: var(--surface);
+    color: var(--text);
+    width: 100%;
+    margin-top: 8px;
+  }
+  .csv-new-hint-text { font-size: 11px; color: var(--text-muted); margin-top: -2px; margin-bottom: 8px; }
+  .csv-new-more { font-size: 11px; color: var(--text-muted); margin: 4px 0 10px; }
+
+  .scanner-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+  }
+  .scanner-box-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .scanner-box-label { font-size: 11px; color: var(--text-muted); }
+  .scanner-box-label small { font-size: 10px; opacity: 0.8; }
+  .scanner-max-btn {
+    appearance: none;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font: inherit;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .scanner-max-btn:hover { filter: brightness(0.97); }
+  .scanner-offers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .scanner-chip {
+    appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .scanner-chip:hover { border-color: var(--accent); color: var(--accent-strong); }
+  .scanner-box-none { font-size: 11px; color: var(--text-muted); }
+
+  .jan-name-box {
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .jan-name-variant {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .jan-name-variant + .jan-name-variant {
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .jan-name-row { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .jan-name-row .k { color: var(--text-muted); font-size: 11px; margin-right: 4px; }
+  .jan-name-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+  .jan-name-btn {
+    appearance: none;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 9px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .jan-name-btn:hover { filter: brightness(0.97); }
+  .jan-name-btn.ghost {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 500;
+  }
+  .jan-name-others {
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .jan-name-others summary {
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    list-style: none;
+  }
+  .jan-name-others summary::-webkit-details-marker { display: none; }
+  .jan-name-others summary:hover { color: var(--accent-strong); }
+  .jan-name-others[open] summary { margin-bottom: 10px; }
+  .jan-name-others .jan-name-variant + .jan-name-variant {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .tmpl-list { display: flex; flex-direction: column; gap: 8px; }
+  .tmpl-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+  }
+  .tmpl-row-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .tmpl-row-top .tmpl-name {
+    font-size: 13px;
+    font-weight: 600;
+    word-break: break-word;
+  }
+  .tmpl-row-fields {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .tmpl-field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1 1 110px;
+    min-width: 100px;
+  }
+  .tmpl-field label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .tmpl-field input {
+    width: 100%;
+    font: inherit;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 7px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    box-sizing: border-box;
+  }
+  .tmpl-row-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .tmpl-row .tmpl-add {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-weight: 600;
+    font-size: 12px;
+    padding: 8px 14px;
+  }
+  .tmpl-row .tmpl-del {
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 6px 8px;
+    border: 1px solid var(--border);
+  }
+  .tmpl-new {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+    flex-wrap: wrap;
+  }
+  .tmpl-new input[type="text"] {
+    flex: 1 1 140px;
+    font: inherit;
+    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .tmpl-new input[type="number"] {
+    width: 108px;
+    flex: 0 0 auto;
+    font: inherit;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .tmpl-new button {
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+  }
+  .tmpl-empty {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 6px 2px;
+  }
+
+  .bulk-body { padding: 4px 16px 16px; border-top: 1px solid var(--border-soft); }
+  .bulk-body .btn-primary { margin-top: 10px; }
+  .bulk-textarea {
+    width: 100%;
+    min-height: 96px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    resize: vertical;
+    line-height: 1.5;
+    box-sizing: border-box;
+  }
+  .bulk-textarea:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .add-card h2 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .add-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 12px;
+  }
+  .add-grid .field.full { grid-column: 1 / -1; }
+
+  .preview-line {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    background: var(--surface-2);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-top: 2px;
+  }
+  .preview-line .label { font-size: 12px; color: var(--text-muted); }
+  .preview-line .value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--accent-strong);
+  }
+
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: var(--radius-sm);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px 16px;
+    width: 100%;
+    margin-top: 4px;
+  }
+  .btn-primary:active { background: var(--accent-strong); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); }
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    font-size: 12px;
+    padding: 6px 10px;
+    border: 1px solid var(--danger-soft);
+  }
+
+  .list-section .list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 2px;
+  }
+  .list-section .list-head h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: 0;
+    letter-spacing: 0.02em;
+  }
+  .list-head-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .list-section > #clearConfirm.confirm-row {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--danger-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+  .list-section > #csvReminderConfirm.confirm-row {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
+    flex-wrap: wrap;
+  }
+  /* These two are toggled via the `hidden` attribute/property in JS, but the
+     more specific rules above (ID + class) otherwise outrank the browser's
+     default [hidden]{display:none}, which left both permanently visible at
+     the bottom of the product list regardless of state. */
+  #clearConfirm[hidden],
+  #csvReminderConfirm[hidden] {
+    display: none !important;
+  }
+
+  .item-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+  .item-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px;
+  }
+  .item-card .row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .item-card .name {
+    font-weight: 600;
+    font-size: 15px;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+  .item-card .example-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .item-card .note {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .item-card .readout {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .item-card .readout .price {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--accent-strong);
+    white-space: nowrap;
+  }
+  .item-card .readout .unit { font-size: 11px; color: var(--text-muted); }
+  .item-card .calc-trail {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    align-items: center;
+  }
+  .item-card .calc-trail .op { color: var(--border); }
+  .item-card .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .edit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .edit-grid .field.full { grid-column: 1 / -1; }
+  .edit-actions { display: flex; gap: 8px; margin-top: 10px; grid-column: 1 / -1; }
+  .edit-actions .btn-primary { margin-top: 0; }
+
+  .confirm-row[hidden] { display: none; }
+  .confirm-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 12px;
+    color: var(--danger);
+  }
+  .confirm-row .btns { display: flex; gap: 8px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 34px 16px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .empty-state .glyph { font-size: 26px; margin-bottom: 8px; display: block; }
+
+  .sync-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 10px 0 0;
+  }
+  .sync-note.err { color: var(--danger); }
+
+  .layout-grid { display: flex; flex-direction: column; gap: 16px; }
+
+  @media (max-width: 420px) {
+    .add-grid, .edit-grid, .settings-body { grid-template-columns: 1fr; }
+    header.topbar .brand h1 { font-size: 18px; }
+  }
+
+  @media (min-width: 820px) {
+    .item-list { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+    .tmpl-list { display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* Product list stays visible in a right-hand column while the entry
+       form / CSV import / saved products stay stacked on the left, so she
+       can keep an eye on the running list while working through the form. */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      align-items: start;
+      gap: 16px;
+    }
+    .layout-grid > #csvDetails,
+    .layout-grid > .add-card,
+    .layout-grid > .bulk-details,
+    .layout-grid > .tmpl-details {
+      grid-column: 1;
+    }
+    .layout-grid > .list-section {
+      grid-column: 2;
+      grid-row: 1 / span 4;
+      position: sticky;
+      top: 90px;
+      max-height: calc(100vh - 106px);
+      overflow-y: auto;
+    }
+    /* The item-list's own two-column mode assumes a full-width section; in
+       the narrow sidebar here a single column reads far better. */
+    .layout-grid > .list-section .item-list {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="eyebrow">輸出価格設定ツール</span>
+      <h1>KANETAKA Export Pricer</h1>
+    </div>
+    <div class="count" id="itemCount">読み込み中…</div>
+  </header>
+
+  <main>
+    <details class="settings" id="settingsDetails">
+      <summary>
+        <span>デフォルト設定</span>
+        <span class="current mono" id="settingsSummary">&hellip;</span>
+        <span class="chev">&#9656;</span>
+      </summary>
+      <div class="settings-body">
+        <div class="field">
+          <label for="defMargin">マージン率 (%)</label>
+          <input type="number" id="defMargin" step="1" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="defFx">為替レート（割る数値）</label>
+          <input type="number" id="defFx" step="0.001" inputmode="decimal">
+        </div>
+        <div class="settings-note">
+          提案価格 = 相場 &times; (1 + マージン率) &divide; 為替レート。例：マージン率3%・為替レート1.1なら「相場 &times; 1.03 &divide; 1.1」。新しい商品にはこの値が初期値として入りますが、商品ごとに上書きできます。
+        </div>
+        <div class="field full">
+          <label class="checkbox-row" for="defRound">
+            <input type="checkbox" id="defRound">
+            100円単位に丸める
+          </label>
+        </div>
+      </div>
+    </details>
+
+    <div class="layout-grid">
+      <details class="settings" id="csvDetails">
+        <summary>
+          <span>CSVから相場を更新・新商品を登録（買取スキャナー）</span>
+          <span class="chev">&#9656;</span>
+        </summary>
+        <div class="settings-body csv-body">
+          <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
+          <div class="field full">
+            <input type="file" id="csvFileInput" accept=".csv,text/csv">
+          </div>
+          <div class="field full" id="csvStatus"></div>
+          <div class="field full" id="csvReviewArea"></div>
+          <div class="field full" id="csvNewArea"></div>
+        </div>
+      </details>
+
+      <section class="card add-card">
+        <h2>新しい商品を追加</h2>
+        <div class="add-grid">
+          <div class="field full name-field">
+            <div class="field-label-row">
+              <label for="inName">商品名（英語）</label>
+              <button type="button" class="field-clear-btn" id="clearNameBtn">✕ クリア</button>
+            </div>
+            <input type="text" id="inName" placeholder="e.g. Canon EOS R5 Body" autocomplete="off">
+            <div class="name-suggest" id="nameSuggest"></div>
+          </div>
+          <div class="field">
+            <label for="inBase">相場 (JPY)</label>
+            <input type="number" id="inBase" step="1" inputmode="numeric" placeholder="180000">
+          </div>
+          <div class="field">
+            <label for="inQty">数量</label>
+            <input type="number" id="inQty" step="1" min="1" inputmode="numeric" value="1">
+          </div>
+          <div class="field full">
+            <label for="inJan">JANコード（任意）</label>
+            <input type="text" id="inJan" inputmode="numeric" placeholder="4549292157345">
+          </div>
+          <div class="field full" id="janNameBox"></div>
+          <div class="field full" id="scannerPriceBox"></div>
+          <div class="field">
+            <label for="inMargin">マージン率 (%)</label>
+            <input type="number" id="inMargin" step="1" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label for="inFx">為替レート（割る数値）</label>
+            <input type="number" id="inFx" step="0.001" inputmode="decimal">
+          </div>
+          <div class="field">
+            <label class="checkbox-row" for="inRound" style="margin-top: 22px;">
+              <input type="checkbox" id="inRound">
+              100円丸め
+            </label>
+          </div>
+          <div class="preview-line">
+            <span class="label">提案価格プレビュー</span>
+            <span class="value mono" id="previewValue">&mdash;</span>
+          </div>
+        </div>
+        <button class="btn-primary" id="addBtn">リストに追加</button>
+      </section>
+
+      <section class="list-section">
+        <div class="list-head">
+          <h2>商品リスト</h2>
+          <div class="list-head-btns">
+            <button class="btn-ghost" id="copyBtn">送付用リストをコピー</button>
+            <button class="btn-ghost" id="clearListBtn">リストをクリア</button>
+          </div>
+        </div>
+        <div id="csvReminderConfirm" class="confirm-row" hidden>
+          <span id="csvReminderText"></span>
+          <div class="btns">
+            <button class="btn-primary" id="csvReminderCopyBtn">コピーする</button>
+            <button class="btn-ghost" id="csvReminderCancelBtn">CSVを読み込みに行く</button>
+          </div>
+        </div>
+        <div id="clearConfirm" class="confirm-row" hidden>
+          <span>商品リストの◯件をすべて削除しますか？（登録済みの商品はそのまま残ります）</span>
+          <div class="btns">
+            <button class="btn-danger" id="clearYesBtn">削除する</button>
+            <button class="btn-ghost" id="clearNoBtn">キャンセル</button>
+          </div>
+        </div>
+        <div class="item-list" id="itemList"></div>
+        <div class="sync-note" id="syncNote"></div>
+      </section>
+
+      <details class="settings bulk-details" id="bulkDetails">
+        <summary>
+          <span>商品を一括登録</span>
+          <span class="chev">&#9656;</span>
+        </summary>
+        <div class="tmpl-body bulk-body">
+          <p class="tmpl-hint">毎週の入荷リストをそのまま貼り付けられます。「商品名 → JANコード✖️数量 → JPY金額」の3行1組（海外へ送る形式）をそのまま貼り付けてもOKです。スプレッドシートからコピーした「商品名<span class="mono">Tab</span>相場」の1行1商品形式にも対応しています。金額が分からない場合は「商品名<span class="mono">,</span>JANコード」だけでも登録でき、価格は前回登録済みのものを自動で引き継ぎます（見つからない場合は登録済みの商品にのみ名前とJANコードを登録します）。</p>
+          <textarea id="bulkText" class="bulk-textarea" rows="5" placeholder="Canon EOS R5 Body	185000
+Canon RF24-70mm F2.8	210000
+Sony FE 50mm F1.2 GM	160000"></textarea>
+          <button class="btn-primary" id="bulkAddBtn">まとめてリストに追加</button>
+        </div>
+      </details>
+
+      <details class="settings tmpl-details" id="tmplDetails">
+        <summary>
+          <span>登録済みの商品</span>
+          <span class="current mono" id="tmplSummaryCount">&hellip;</span>
+          <span class="chev">&#9656;</span>
+        </summary>
+        <div class="tmpl-body">
+          <div class="tmpl-head">
+            <button class="btn-ghost" id="tmplCopyBtn">一覧表をコピー</button>
+          </div>
+          <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。相場やJANコードは入力欄から離れると自動で保存されます。「商品リストに追加」を押すと、その時点の相場で商品リストに追加されます。</p>
+          <div class="tmpl-list" id="tmplList"></div>
+          <div class="tmpl-new">
+            <input type="text" id="tmplName" placeholder="商品名（英語）">
+            <input type="number" id="tmplPrice" step="1" inputmode="numeric" placeholder="相場 (JPY)">
+            <input type="text" id="tmplJan" inputmode="numeric" placeholder="JANコード（任意）">
+            <button id="tmplRegisterBtn">商品を登録</button>
+          </div>
+        </div>
+      </details>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  var state = {
+    db: null,
+    settings: { marginPercent: 3, fxRate: 1.1, roundTo100: false },
+    settingsLoaded: false,
+    items: [],
+    itemsLoaded: false,
+    templates: [],
+    templatesLoaded: false,
+    editingId: null,
+    confirmingId: null
+  };
+
+  function slugify(name) {
+    var s = String(name || '').toLowerCase().trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    if (!s) s = 'item-' + Date.now();
+    return s.substring(0, 120);
+  }
+
+  function fmtYen(n) {
+    if (!isFinite(n)) return '—';
+    return '¥' + Math.round(n).toLocaleString('ja-JP');
+  }
+
+  function computeProposal(basePriceJPY, marginPercent, fxRate, roundTo100) {
+    var base = Number(basePriceJPY) || 0;
+    var margin = Number(marginPercent);
+    if (!isFinite(margin)) margin = 0;
+    var fx = Number(fxRate);
+    if (!isFinite(fx) || fx <= 0) fx = 1;
+    var raw = (base * (1 + margin / 100)) / fx;
+    return roundTo100 ? Math.round(raw / 100) * 100 : Math.round(raw);
+  }
+
+  // ---------- settings summary / defaults panel ----------
+  var defMargin = document.getElementById('defMargin');
+  var defFx = document.getElementById('defFx');
+  var defRound = document.getElementById('defRound');
+  var settingsSummary = document.getElementById('settingsSummary');
+
+  function renderSettingsSummary() {
+    settingsSummary.textContent =
+      '×' + (1 + state.settings.marginPercent / 100).toFixed(2) + ' ÷' + state.settings.fxRate.toFixed(3);
+  }
+
+  function applySettingsToForm() {
+    defMargin.value = state.settings.marginPercent;
+    defFx.value = state.settings.fxRate;
+    defRound.checked = !!state.settings.roundTo100;
+    renderSettingsSummary();
+    // keep add-form defaults in sync unless the user already touched them
+    if (!addFormTouched) {
+      inMargin.value = state.settings.marginPercent;
+      inFx.value = state.settings.fxRate;
+      inRound.checked = !!state.settings.roundTo100;
+      updatePreview();
+    }
+  }
+
+  var settingsSaveTimer = null;
+  function scheduleSettingsSave() {
+    clearTimeout(settingsSaveTimer);
+    settingsSaveTimer = setTimeout(function () {
+      var margin = parseFloat(defMargin.value);
+      var fx = parseFloat(defFx.value);
+      if (!isFinite(margin)) margin = 0;
+      if (!isFinite(fx) || fx <= 0) fx = 1;
+      var round = defRound.checked;
+      state.settings = { marginPercent: margin, fxRate: fx, roundTo100: round };
+      renderSettingsSummary();
+      if (state.db) {
+        state.db.doc('settings/default').set({
+          marginPercent: margin,
+          fxRate: fx,
+          roundTo100: round,
+          updatedAt: new Date().toISOString()
+        }).catch(function () { showSyncNote('設定の保存に失敗しました', true); });
+      }
+    }, 500);
+  }
+  [defMargin, defFx, defRound].forEach(function (el) {
+    el.addEventListener('input', scheduleSettingsSave);
+    el.addEventListener('change', scheduleSettingsSave);
+  });
+
+  // ---------- add form ----------
+  var inName = document.getElementById('inName');
+  var inBase = document.getElementById('inBase');
+  var inQty = document.getElementById('inQty');
+  var inJan = document.getElementById('inJan');
+  var inMargin = document.getElementById('inMargin');
+  var inFx = document.getElementById('inFx');
+  var inRound = document.getElementById('inRound');
+  var previewValue = document.getElementById('previewValue');
+  var addBtn = document.getElementById('addBtn');
+  var scannerPriceBox = document.getElementById('scannerPriceBox');
+  var janNameBox = document.getElementById('janNameBox');
+  var clearNameBtn = document.getElementById('clearNameBtn');
+  var nameSuggest = document.getElementById('nameSuggest');
+  var addFormTouched = false;
+  var nameSuggestActiveIdx = -1;
+
+  [inMargin, inFx, inRound].forEach(function (el) {
+    el.addEventListener('input', function () { addFormTouched = true; updatePreview(); });
+  });
+  inBase.addEventListener('input', updatePreview);
+  inName.addEventListener('input', function () {
+    var typed = inName.value.trim().toLowerCase();
+    renderNameSuggestions(inName.value);
+    if (!typed) {
+      // Name field was cleared (by hand or via the clear button) — clear the
+      // rest of the form too, since she's switching to a different product.
+      inBase.value = '';
+      inQty.value = 1;
+      inJan.value = '';
+      updatePreview();
+      renderScannerPriceBox();
+      renderJanNameBox();
+      return;
+    }
+    var match = state.templates.filter(function (t) { return t.englishName.toLowerCase() === typed; })[0];
+    if (match) {
+      if (!inBase.value) inBase.value = match.basePriceJPY;
+      if (!inJan.value && match.janCode) inJan.value = match.janCode;
+      updatePreview();
+      renderScannerPriceBox();
+      renderJanNameBox();
+    }
+  });
+  inJan.addEventListener('input', function () {
+    renderScannerPriceBox();
+    renderJanNameBox();
+  });
+  clearNameBtn.addEventListener('click', function () {
+    inName.value = '';
+    inName.dispatchEvent(new Event('input'));
+    hideNameSuggestions();
+    inName.focus();
+  });
+
+  // ---------- product-name suggestions (custom dropdown) ----------
+  // A native <datalist> was used here before, but iOS Safari does not show
+  // datalist suggestions for text inputs (it works fine on desktop browsers,
+  // which is why this only ever seemed to work "on the Mac"). This builds
+  // and positions the suggestion list ourselves so it works the same way on
+  // phones and on desktop.
+  function escRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  function renderNameSuggestions(query) {
+    var typed = query.trim();
+    if (!typed || !state.templates.length) { hideNameSuggestions(); return; }
+    var typedLower = typed.toLowerCase();
+    var matches = state.templates.filter(function (t) {
+      return t.englishName.toLowerCase().indexOf(typedLower) !== -1;
+    });
+    // Exact match already filled the form silently — no need to show a
+    // single suggestion identical to what's already typed.
+    if (matches.length === 1 && matches[0].englishName.toLowerCase() === typedLower) {
+      hideNameSuggestions();
+      return;
+    }
+    if (!matches.length) { hideNameSuggestions(); return; }
+    matches.sort(function (a, b) {
+      var ai = a.englishName.toLowerCase().indexOf(typedLower);
+      var bi = b.englishName.toLowerCase().indexOf(typedLower);
+      if (ai !== bi) return ai - bi;
+      return a.englishName.localeCompare(b.englishName);
+    });
+    matches = matches.slice(0, 8);
+    var re = new RegExp('(' + escRegExp(typed) + ')', 'ig');
+    nameSuggestActiveIdx = -1;
+    nameSuggest.innerHTML = matches.map(function (t) {
+      var highlighted = esc(t.englishName).replace(re, '<mark>$1</mark>');
+      return '<button type="button" class="name-suggest-item" data-name="' + esc(t.englishName) + '">' + highlighted + '</button>';
+    }).join('');
+    nameSuggest.classList.add('open');
+  }
+
+  function hideNameSuggestions() {
+    nameSuggest.classList.remove('open');
+    nameSuggest.innerHTML = '';
+    nameSuggestActiveIdx = -1;
+  }
+
+  function chooseNameSuggestion(name) {
+    inName.value = name;
+    hideNameSuggestions();
+    inName.dispatchEvent(new Event('input'));
+  }
+
+  nameSuggest.addEventListener('mousedown', function (e) {
+    // mousedown (not click) so this fires before the input's blur handler
+    // hides the box — otherwise a tap on a suggestion closes it first.
+    var btn = e.target.closest('.name-suggest-item');
+    if (btn) { e.preventDefault(); chooseNameSuggestion(btn.getAttribute('data-name')); }
+  });
+  nameSuggest.addEventListener('touchstart', function (e) {
+    var btn = e.target.closest('.name-suggest-item');
+    if (btn) { e.preventDefault(); chooseNameSuggestion(btn.getAttribute('data-name')); }
+  }, { passive: false });
+
+  inName.addEventListener('focus', function () {
+    if (inName.value.trim()) renderNameSuggestions(inName.value);
+  });
+  inName.addEventListener('blur', function () {
+    // Slight delay so a tap on a suggestion (mousedown/touchstart above)
+    // still registers before the list disappears.
+    setTimeout(hideNameSuggestions, 150);
+  });
+  inName.addEventListener('keydown', function (e) {
+    var items = nameSuggest.querySelectorAll('.name-suggest-item');
+    if (!items.length || !nameSuggest.classList.contains('open')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      nameSuggestActiveIdx = Math.min(nameSuggestActiveIdx + 1, items.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      nameSuggestActiveIdx = Math.max(nameSuggestActiveIdx - 1, 0);
+    } else if (e.key === 'Enter') {
+      if (nameSuggestActiveIdx >= 0 && items[nameSuggestActiveIdx]) {
+        e.preventDefault();
+        chooseNameSuggestion(items[nameSuggestActiveIdx].getAttribute('data-name'));
+      }
+      return;
+    } else if (e.key === 'Escape') {
+      hideNameSuggestions();
+      return;
+    } else {
+      return;
+    }
+    items.forEach(function (el, i) { el.classList.toggle('active', i === nameSuggestActiveIdx); });
+    items[nameSuggestActiveIdx].scrollIntoView({ block: 'nearest' });
+  });
+
+  function updatePreview() {
+    var val = computeProposal(inBase.value, inMargin.value, inFx.value, inRound.checked);
+    previewValue.textContent = inBase.value ? fmtYen(val) : '—';
+  }
+
+  // Shows the last loaded CSV's買取価格 comparison for whatever JAN code is
+  // currently in the add-form, so she can accept the top price with one tap
+  // or pick a specific shop's price after comparing.
+  function renderScannerPriceBox() {
+    var jan = inJan.value.trim();
+    if (!jan) {
+      scannerPriceBox.innerHTML = '';
+      return;
+    }
+    var hasAnyCsvData = Object.keys(csvIndexByJan).length > 0;
+    if (!hasAnyCsvData) {
+      scannerPriceBox.innerHTML = '<div class="scanner-box-none">買取スキャナーのCSVを読み込むと、ここに参考価格が表示されます（下の「CSVから相場を更新・新商品を登録」）</div>';
+      return;
+    }
+    var offers = csvIndexByJan[jan];
+    if (!offers || offers.length === 0) {
+      scannerPriceBox.innerHTML = '<div class="scanner-box-none">このJANコードの買取スキャナー価格は見つかりませんでした' +
+        (csvIndexSavedAt ? '（CSV取り込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '）' : '') + '</div>';
+      return;
+    }
+    var maxPrice = offers[0].price;
+    var chips = offers.map(function (o) {
+      return '<button type="button" class="scanner-chip" data-price="' + o.price + '">' +
+        esc(o.shop) + ' &yen;' + Math.round(o.price).toLocaleString('ja-JP') + '</button>';
+    }).join('');
+    scannerPriceBox.innerHTML =
+      '<div class="scanner-box">' +
+        '<div class="scanner-box-head">' +
+          '<span class="scanner-box-label">買取スキャナーの参考価格（最高値）' +
+            (csvIndexSavedAt ? '<br><small>CSV取り込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '</small>' : '') +
+          '</span>' +
+          '<button type="button" class="scanner-max-btn" id="scannerUseMaxBtn">&yen;' + Math.round(maxPrice).toLocaleString('ja-JP') + ' を使う</button>' +
+        '</div>' +
+        '<div class="scanner-offers">' + chips + '</div>' +
+      '</div>';
+    document.getElementById('scannerUseMaxBtn').addEventListener('click', function () {
+      inBase.value = maxPrice;
+      updatePreview();
+    });
+    scannerPriceBox.querySelectorAll('.scanner-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        inBase.value = parseFloat(chip.getAttribute('data-price'));
+        updatePreview();
+      });
+    });
+  }
+
+  // Small Japanese->English dictionary of the brand names, mount labels and
+  // category words that actually show up in the買取スキャナーCSV's product
+  // names, used to build a best-effort English-name suggestion. It's not a
+  // real translator — anything it doesn't recognize (kanji descriptions,
+  // colors, etc.) is left as-is — but for camera/lens listings, where the
+  // model number and specs are already in Roman characters, substituting the
+  // brand/mount/category words usually gets very close. Longer/compound
+  // entries are listed first so they're substituted before their shorter
+  // sub-strings (e.g. "キヤノンRF" before plain "キヤノン").
+  var JAN_NAME_JA_EN_TERMS = [
+    ['キヤノンRF', 'Canon RF'], ['キャノンRF', 'Canon RF'],
+    ['ニコンZ', 'Nikon Z'], ['ソニーE', 'Sony E'],
+    ['フジフイルムX', 'Fujifilm X'], ['フジフィルムX', 'Fujifilm X'],
+    ['ライカL', 'Leica L'], ['ライカM', 'Leica M'],
+    ['マイクロフォーサーズ', 'Micro Four Thirds'],
+    ['キヤノン', 'Canon'], ['キャノン', 'Canon'],
+    ['ニコン', 'Nikon'], ['ソニー', 'Sony'],
+    ['オリンパス', 'Olympus'], ['パナソニック', 'Panasonic'],
+    ['富士フィルム', 'Fujifilm'], ['富士フイルム', 'Fujifilm'],
+    ['フジフイルム', 'Fujifilm'], ['フジフィルム', 'Fujifilm'],
+    ['フジノン', 'Fujinon'],
+    ['ペンタックス', 'Pentax'], ['ライカ', 'Leica'],
+    ['タムロン', 'Tamron'], ['シグマ', 'Sigma'],
+    ['コシナ', 'Cosina'], ['リコー', 'Ricoh'], ['カシオ', 'Casio'],
+    ['サイバーショット', 'Cyber-shot'], ['フォクトレンダー', 'Voigtländer'],
+    ['カールツァイス', 'Carl Zeiss'], ['ツァイス', 'Zeiss'],
+    // Camera/lens type compounds — before their shorter sub-strings, so
+    // e.g. "ミラーレス一眼カメラ" becomes "Mirrorless Camera", not
+    // "Mirrorless Cameraカメラ" from a shorter match leaving "カメラ" behind.
+    ['デジタル一眼カメラ', 'Digital SLR Camera'],
+    ['ミラーレス一眼カメラ', 'Mirrorless Camera'],
+    ['ミラーレス一眼', 'Mirrorless Camera'], ['一眼レフ', 'DSLR'],
+    ['コンパクトデジタルカメラ', 'Compact Digital Camera'],
+    ['デジタルカメラ', 'Digital Camera'],
+    ['インスタントカメラ', 'Instant Camera'],
+    ['アクションカメラ', 'Action Camera'],
+    ['防犯カメラ', 'Security Camera'], ['ビデオカメラ', 'Video Camera'],
+    ['チェキスクエア', 'Instax Square'],
+    ['チェキ用フィルム', 'Instax Film'], ['チェキ', 'Instax'],
+    ['カメラレンズ', 'Camera Lens'], ['広角レンズ', 'Wide-angle Lens'],
+    ['望遠レンズ', 'Telephoto Lens'], ['標準レンズ', 'Standard Lens'],
+    ['単焦点レンズ', 'Prime Lens'], ['マクロレンズ', 'Macro Lens'],
+    // Kit compounds — longest first, generic "キット" last as a catch-all.
+    ['シューティンググリップキット', 'Shooting Grip Kit'],
+    ['高倍率ズームレンズキット', 'High Magnification Zoom Lens Kit'],
+    ['標準ズームレンズキット', 'Standard Zoom Lens Kit'],
+    ['パワーズームレンズキット', 'Power Zoom Lens Kit'],
+    ['ダブルズームレンズキット', 'Double Zoom Lens Kit'],
+    ['ズームレンズキット', 'Zoom Lens Kit'],
+    ['ダブルレンズキット', 'Double Lens Kit'],
+    ['レンズキット', 'Lens Kit'],
+    ['ダブルズームキット', 'Double Zoom Kit'],
+    ['ズームレンズ', 'Zoom Lens'], ['交換レンズ', 'Interchangeable Lens'],
+    ['レンズ', 'Lens'], ['ボディ', 'Body'], ['キット', 'Kit'],
+    ['マクロ', 'Macro'], ['ジャンク', 'Junk'],
+    ['フィルム', 'Film'], ['スピードライト', 'Speedlight'],
+    ['スタンダードコンボ', 'Standard Combo'], ['コンボ', 'Combo'],
+    ['パック', 'Pack'],
+    // Colors — compound shades before the base color they contain.
+    ['ジェットブラック', 'Jet Black'], ['チャコールシルバー', 'Charcoal Silver'],
+    ['ダークシルバー', 'Dark Silver'], ['クレイホワイト', 'Clay White'],
+    ['ブラック', 'Black'], ['ホワイト', 'White'], ['シルバー', 'Silver'],
+    ['レッド', 'Red'], ['ブルー', 'Blue'], ['グレー', 'Gray'],
+    ['ブラウン', 'Brown'], ['オレンジ', 'Orange'],
+    // Bare "カメラ" fallback — after every "○○カメラ" compound above, so it
+    // only fires on leftovers those didn't already cover.
+    ['カメラ', 'Camera']
+  ];
+
+  // Brand names that show up as a bare "<ブランド>用" suffix (no brackets)
+  // rather than the "[<ブランド>用]" bracket form guessEnglishName's other
+  // regex already handles — e.g. "フジフイルム用" -> "for Fujifilm".
+  var JAN_NAME_BARE_MOUNT_BRANDS = [
+    'キヤノンRF', 'キャノンRF', 'ニコンZ', 'ソニーE', 'フジフイルムX', 'フジフィルムX',
+    'ライカL', 'ライカM', 'キヤノン', 'キャノン', 'ニコン', 'ソニー', 'オリンパス',
+    'パナソニック', '富士フィルム', '富士フイルム', 'フジフイルム', 'フジフィルム',
+    'ペンタックス', 'ライカ', 'タムロン', 'シグマ', 'コシナ', 'リコー', 'カシオ'
+  ];
+
+  function janNameTranslateTerms(s) {
+    JAN_NAME_JA_EN_TERMS.forEach(function (pair) {
+      s = s.split(pair[0]).join(pair[1]);
+    });
+    return s;
+  }
+
+  // Turns a CSV reference name like "シグマ 18-35mm F1.8 DC HSM [キヤノン用]"
+  // into a best-effort "Sigma 18-35mm F1.8 DC HSM (for Canon Mount)" — a
+  // starting point to review/edit, not a finished translation.
+  function guessEnglishName(raw) {
+    if (!raw) return '';
+    var s = raw;
+    s = s.replace(/[\[［]([^\]］]*?)用[\]／]/g, function (_, inner) {
+      return '(for ' + janNameTranslateTerms(inner) + ' Mount)';
+    });
+    // Same "<brand>用" mount suffix, but written bare (no brackets) — e.g.
+    // "フジフイルム用" rather than "[フジフイルム用]".
+    JAN_NAME_BARE_MOUNT_BRANDS.forEach(function (brand) {
+      s = s.split(brand + '用').join('for ' + janNameTranslateTerms(brand));
+    });
+    s = janNameTranslateTerms(s);
+    return s.replace(/\s+/g, ' ').trim();
+  }
+
+  // The CSV has no single "master title" field — each shop's "○○_商品名"
+  // column is worded independently, and none of them is marked as the one
+  // the 買取スキャナー site itself shows at the top of its own product page.
+  // That page title tends to be the plainest version that still keeps any
+  // bracketed attribute (a color like "[ホワイト]"), without a repeated
+  // brand name, category words, or the JAN code tacked on — so among the
+  // variants that have a bracket, the shortest one is the closest guess;
+  // with no bracketed variant at all, just the shortest overall.
+  function pickBestName(names) {
+    var withBracket = names.filter(function (n) { return /[\[［]/.test(n); });
+    var pool = withBracket.length ? withBracket : names;
+    return pool.reduce(function (best, n) { return (best === null || n.length < best.length) ? n : best; }, null);
+  }
+
+  function renderJanNameVariant(refName, idx) {
+    var guess = guessEnglishName(refName);
+    return '<div class="jan-name-variant">' +
+        '<div class="jan-name-row"><span class="k">CSV名称:</span>' + esc(refName) + '</div>' +
+        '<div class="jan-name-row"><span class="k">英語名の候補:</span>' + esc(guess) + '</div>' +
+        '<div class="jan-name-btns">' +
+          '<button type="button" class="jan-name-btn" data-idx="' + idx + '">この英語名を使う</button>' +
+          '<button type="button" class="jan-name-btn ghost" data-idx="' + idx + '" data-translate="1">Google翻訳で確認</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // When she types a JAN code for a product she hasn't registered yet, look
+  // it up in the last loaded CSV and offer its best-guess reference name
+  // plus a best-effort English translation, with a one-click "use it" and a
+  // one-click Google Translate fallback for anything the guess gets wrong.
+  // The other shops' name variants are still there, just tucked behind a
+  // "他の候補を見る" toggle instead of all shown at once.
+  // If the JAN matches an already-registered product instead, just fill in
+  // what's already on file — no translation needed.
+  function renderJanNameBox() {
+    var jan = inJan.value.trim();
+    if (!jan) { janNameBox.innerHTML = ''; return; }
+
+    var tmpl = state.templates.filter(function (t) { return (t.janCode || '').trim() === jan; })[0];
+    if (tmpl) {
+      if (!inName.value) inName.value = tmpl.englishName;
+      if (!inBase.value) inBase.value = tmpl.basePriceJPY;
+      updatePreview();
+      janNameBox.innerHTML = '<div class="jan-name-box"><div class="jan-name-row"><span class="k">登録済みの商品です:</span>' + esc(tmpl.englishName) + '</div></div>';
+      return;
+    }
+
+    var refNames = csvNameByJan[jan];
+    if (!refNames || refNames.length === 0) { janNameBox.innerHTML = ''; return; }
+
+    var bestName = pickBestName(refNames);
+    var bestIdx = refNames.indexOf(bestName);
+    var otherIdxs = refNames.map(function (_, i) { return i; }).filter(function (i) { return i !== bestIdx; });
+
+    var html = '<div class="jan-name-box">' + renderJanNameVariant(bestName, bestIdx);
+    if (otherIdxs.length) {
+      html += '<details class="jan-name-others">' +
+          '<summary>他の候補を見る（' + otherIdxs.length + '件）</summary>' +
+          otherIdxs.map(function (i) { return renderJanNameVariant(refNames[i], i); }).join('') +
+        '</details>';
+    }
+    html += '</div>';
+    janNameBox.innerHTML = html;
+
+    janNameBox.querySelectorAll('.jan-name-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var idx = parseInt(btn.getAttribute('data-idx'), 10);
+        var refName = refNames[idx];
+        if (btn.getAttribute('data-translate')) {
+          var url = 'https://translate.google.com/?sl=ja&tl=en&text=' + encodeURIComponent(refName) + '&op=translate';
+          window.open(url, '_blank', 'noopener');
+        } else {
+          inName.value = guessEnglishName(refName);
+          updatePreview();
+        }
+      });
+    });
+  }
+
+  addBtn.addEventListener('click', function () {
+    var name = inName.value.trim();
+    var base = parseFloat(inBase.value);
+    if (!name) { inName.focus(); return; }
+    if (!isFinite(base) || base <= 0) { inBase.focus(); return; }
+    var qty = parseInt(inQty.value, 10);
+    if (!isFinite(qty) || qty <= 0) qty = 1;
+    var jan = inJan.value.trim();
+    var margin = parseFloat(inMargin.value);
+    var fx = parseFloat(inFx.value);
+    if (!isFinite(margin)) margin = state.settings.marginPercent;
+    if (!isFinite(fx) || fx <= 0) fx = state.settings.fxRate;
+    var round = inRound.checked;
+    var proposal = computeProposal(base, margin, fx, round);
+
+    var data = {
+      englishName: name,
+      basePriceJPY: base,
+      quantity: qty,
+      janCode: jan,
+      marginPercent: margin,
+      fxRate: fx,
+      roundTo100: round,
+      proposalPriceJPY: proposal,
+      isExample: false,
+      createdAt: new Date().toISOString()
+    };
+
+    if (state.db) {
+      addBtn.disabled = true;
+      state.db.collection('items').add(data)
+        .catch(function () { showSyncNote('追加に失敗しました。もう一度お試しください', true); })
+        .then(function () { addBtn.disabled = false; });
+      upsertTemplate(name, base, margin, fx, round, jan);
+    } else {
+      showSyncNote('同期の準備中です。少し待ってから追加してください', true);
+      return;
+    }
+
+    inName.value = '';
+    inBase.value = '';
+    inQty.value = '1';
+    inJan.value = '';
+    addFormTouched = false;
+    inMargin.value = state.settings.marginPercent;
+    inFx.value = state.settings.fxRate;
+    inRound.checked = !!state.settings.roundTo100;
+    updatePreview();
+  });
+
+  // ---------- templates (登録済みの商品 / product master) ----------
+  var tmplList = document.getElementById('tmplList');
+  var tmplName = document.getElementById('tmplName');
+  var tmplPrice = document.getElementById('tmplPrice');
+  var tmplJan = document.getElementById('tmplJan');
+  var tmplRegisterBtn = document.getElementById('tmplRegisterBtn');
+  var tmplCopyBtn = document.getElementById('tmplCopyBtn');
+  var tmplSummaryCount = document.getElementById('tmplSummaryCount');
+
+  // Reads the existing template (if any) so an auto-registration from the
+  // add form / bulk add never wipes out a JAN code entered separately.
+  function upsertTemplate(name, basePriceJPY, marginPercent, fxRate, roundTo100, janCode) {
+    if (!state.db || !name) return Promise.resolve();
+    var id = slugify(name);
+    var ref = state.db.collection('templates').doc(id);
+    return ref.get().then(function (snap) {
+      var payload = {
+        englishName: name,
+        basePriceJPY: basePriceJPY,
+        marginPercent: marginPercent,
+        fxRate: fxRate,
+        roundTo100: roundTo100,
+        updatedAt: new Date().toISOString()
+      };
+      if (janCode) payload.janCode = janCode;
+      if (snap.exists) {
+        return ref.update(payload).catch(function () {});
+      }
+      if (!payload.janCode) payload.janCode = '';
+      return ref.set(payload).catch(function () {});
+    }).catch(function () {});
+  }
+
+  tmplRegisterBtn.addEventListener('click', function () {
+    var name = tmplName.value.trim();
+    var price = parseFloat(tmplPrice.value);
+    var jan = tmplJan.value.trim();
+    if (!name) { tmplName.focus(); return; }
+    if (!isFinite(price) || price <= 0) { tmplPrice.focus(); return; }
+    if (!state.db) { showSyncNote('同期の準備中です。少し待ってから登録してください', true); return; }
+    upsertTemplate(name, price, state.settings.marginPercent, state.settings.fxRate, state.settings.roundTo100, jan);
+    tmplName.value = '';
+    tmplPrice.value = '';
+    tmplJan.value = '';
+  });
+
+  tmplCopyBtn.addEventListener('click', function () {
+    if (!state.templates.length) { showSyncNote('登録済みの商品がありません', true); return; }
+    var lines = state.templates.map(function (t) {
+      return t.englishName + '\t' + (t.janCode || '');
+    });
+    var text = 'English Name\tJAN Code\n' + lines.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showSyncNote('一覧表をコピーしました');
+      }).catch(function () {
+        showSyncNote('コピーできませんでした', true);
+      });
+    }
+  });
+
+  function renderTemplates() {
+    if (nameSuggest.classList.contains('open')) renderNameSuggestions(inName.value);
+    if (tmplSummaryCount) {
+      tmplSummaryCount.textContent = state.templatesLoaded ? (state.templates.length + '件') : '…';
+    }
+    if (!state.templatesLoaded) {
+      tmplList.innerHTML = '<div class="tmpl-empty">読み込み中…</div>';
+      return;
+    }
+    if (state.templates.length === 0) {
+      tmplList.innerHTML = '<div class="tmpl-empty">まだ登録がありません。下のフォームから登録するか、商品を追加すると自動的に登録されます。</div>';
+      return;
+    }
+    tmplList.innerHTML = state.templates.map(function (t) {
+      return (
+        '<div class="tmpl-row" data-id="' + t.id + '">' +
+          '<div class="tmpl-row-top">' +
+            '<span class="tmpl-name">' + esc(t.englishName) + '</span>' +
+            '<button class="tmpl-del">削除</button>' +
+          '</div>' +
+          '<div class="tmpl-row-fields">' +
+            '<div class="tmpl-field"><label>相場 (JPY)</label><input type="number" class="tmpl-price-input" value="' + t.basePriceJPY + '" step="1" inputmode="numeric"></div>' +
+            '<div class="tmpl-field"><label>JANコード</label><input type="text" class="tmpl-jan-input" value="' + esc(t.janCode || '') + '" inputmode="numeric" placeholder="4901234567890"></div>' +
+          '</div>' +
+          '<div class="tmpl-row-actions"><button class="tmpl-add">商品リストに追加</button></div>' +
+        '</div>'
+      );
+    }).join('');
+    tmplList.querySelectorAll('.tmpl-jan-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var id = input.closest('.tmpl-row').getAttribute('data-id');
+        if (!state.db) return;
+        state.db.collection('templates').doc(id).update({
+          janCode: input.value.trim(),
+          updatedAt: new Date().toISOString()
+        }).catch(function () { showSyncNote('JANコードの保存に失敗しました', true); });
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-price-input').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var id = input.closest('.tmpl-row').getAttribute('data-id');
+        var price = parseFloat(input.value);
+        if (!state.db || !isFinite(price) || price <= 0) return;
+        state.db.collection('templates').doc(id).update({
+          basePriceJPY: price,
+          updatedAt: new Date().toISOString()
+        }).then(function () {
+          showSyncNote('相場を保存しました');
+        }).catch(function () { showSyncNote('相場の保存に失敗しました', true); });
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-add').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var row = btn.closest('.tmpl-row');
+        var id = row.getAttribute('data-id');
+        var t = state.templates.filter(function (x) { return x.id === id; })[0];
+        if (!t) return;
+        var price = parseFloat(row.querySelector('.tmpl-price-input').value);
+        if (!isFinite(price) || price <= 0) return;
+        var margin = state.settings.marginPercent;
+        var fx = state.settings.fxRate;
+        var round = state.settings.roundTo100;
+        var proposal = computeProposal(price, margin, fx, round);
+        if (!state.db) { showSyncNote('同期の準備中です', true); return; }
+        state.db.collection('items').add({
+          englishName: t.englishName,
+          basePriceJPY: price,
+          quantity: 1,
+          janCode: t.janCode || '',
+          marginPercent: margin,
+          fxRate: fx,
+          roundTo100: round,
+          proposalPriceJPY: proposal,
+          isExample: false,
+          createdAt: new Date().toISOString()
+        }).catch(function () { showSyncNote('追加に失敗しました', true); });
+        state.db.collection('templates').doc(id).update({
+          basePriceJPY: price,
+          updatedAt: new Date().toISOString()
+        }).catch(function () {});
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.closest('.tmpl-row').getAttribute('data-id');
+        if (state.db) {
+          state.db.collection('templates').doc(id).delete()
+            .catch(function () { showSyncNote('削除に失敗しました', true); });
+        }
+      });
+    });
+  }
+
+  // ---------- CSV import (買取スキャナーの比較CSVから相場を更新) ----------
+  // A minimal CSV parser that handles quoted fields (commas/newlines inside
+  // quotes, doubled "" as an escaped quote) — a plain split(',') breaks on
+  // this file since some product-name fields contain commas.
+  function parseCsv(text) {
+    var rows = [];
+    var row = [];
+    var field = '';
+    var inQuotes = false;
+    var i = 0;
+    var len = text.length;
+    while (i < len) {
+      var c = text.charAt(i);
+      if (inQuotes) {
+        if (c === '"') {
+          if (text.charAt(i + 1) === '"') { field += '"'; i += 2; continue; }
+          inQuotes = false; i++; continue;
+        }
+        field += c; i++; continue;
+      }
+      if (c === '"') { inQuotes = true; i++; continue; }
+      if (c === ',') { row.push(field); field = ''; i++; continue; }
+      if (c === '\r') { i++; continue; }
+      if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+      field += c; i++;
+    }
+    if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  // Finds the JAN column, every "○○_買取価格" column, every "○○_メインカテゴリ"
+  // column, and every "○○_商品名" column — whatever shops the export happens
+  // to include (the column layout isn't identical per shop).
+  function buildCsvColumns(header) {
+    var janIdx = -1;
+    header.forEach(function (h, idx) { if (h.trim() === 'JAN') janIdx = idx; });
+    var priceCols = [];
+    var catIdxs = [];
+    var nameIdxs = [];
+    header.forEach(function (h, idx) {
+      if (/買取価格$/.test(h)) priceCols.push({ idx: idx, shop: h.replace(/_?買取価格$/, '') });
+      if (/メインカテゴリ$/.test(h)) catIdxs.push(idx);
+      if (/商品名$/.test(h)) nameIdxs.push(idx);
+    });
+    return { janIdx: janIdx, priceCols: priceCols, catIdxs: catIdxs, nameIdxs: nameIdxs };
+  }
+
+  // A CSV row counts as camera/lens related when any of its category columns
+  // mentions カメラ or レンズ — this is what keeps the "new product" candidate
+  // list from including the CSV's thousands of unrelated rows (furniture,
+  // watches, cookware, etc.).
+  function isCameraCategory(row, catIdxs) {
+    return catIdxs.some(function (ci) { return /カメラ|レンズ/.test(row[ci] || ''); });
+  }
+
+  function firstNonEmpty(row, idxs) {
+    for (var i = 0; i < idxs.length; i++) {
+      if (row[idxs[i]]) return row[idxs[i]];
+    }
+    return '';
+  }
+
+  var csvFileInput = document.getElementById('csvFileInput');
+  var csvStatus = document.getElementById('csvStatus');
+  var csvReviewArea = document.getElementById('csvReviewArea');
+  var csvNewArea = document.getElementById('csvNewArea');
+  var csvMatches = [];
+  var csvNewCandidates = [];
+  var csvNewSearchTerm = '';
+  var CSV_NEW_DISPLAY_CAP = 60;
+  // Full JAN -> top-5-offers index, built from every row of the last loaded
+  // CSV (not just the camera/lens category ones) — used by the "新しい商品を
+  // 追加" form to show a scanner-price reference while she's typing. Persisted
+  // to localStorage (this browser only) so it survives page reloads and is
+  // still there next time she opens the page, not just for the rest of the
+  // same tab session.
+  var CSV_INDEX_STORAGE_KEY = 'kntk_export_pricer_csv_index_v2';
+  var csvIndexByJan = {};
+  // JAN -> array of every distinct reference product name the CSV carries
+  // for it (Japanese, one per shop's "○○_商品名" column — shops often word
+  // it slightly differently, e.g. only some include a "[ホワイト]" color
+  // suffix) — used to look up an unregistered product's name from its JAN in
+  // the "新しい商品を追加" form, alongside a best-effort English name guess
+  // for each variant.
+  var csvNameByJan = {};
+  var csvIndexSavedAt = '';
+
+  function loadCsvIndexFromStorage() {
+    try {
+      var raw = localStorage.getItem(CSV_INDEX_STORAGE_KEY);
+      if (!raw) return;
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.index) {
+        csvIndexByJan = parsed.index;
+        csvNameByJan = parsed.names || {};
+        csvIndexSavedAt = parsed.savedAt || '';
+      }
+    } catch (e) { /* ignore — falls back to empty index */ }
+  }
+
+  function saveCsvIndexToStorage() {
+    csvIndexSavedAt = new Date().toISOString();
+    try {
+      localStorage.setItem(CSV_INDEX_STORAGE_KEY, JSON.stringify({ savedAt: csvIndexSavedAt, index: csvIndexByJan, names: csvNameByJan }));
+    } catch (e) { /* storage full or unavailable — index still works for this session */ }
+  }
+
+  // Pushes the camera/lens-only subset of the freshly loaded CSV to
+  // Firebase, so every device (phone included) picks it up automatically —
+  // no need to re-load the CSV on each one. Fails silently offline; the
+  // local, unscoped copy (saveCsvIndexToStorage) still works on this device
+  // either way.
+  function saveScannerIndexToFirebase(sharedIndex, sharedNames) {
+    if (!state.db) return;
+    state.db.doc('scannerIndex/data').set({
+      savedAt: csvIndexSavedAt,
+      index: sharedIndex,
+      names: sharedNames
+    }).then(function () {
+      showSyncNote('買取スキャナーのデータを他の端末とも共有しました');
+    }).catch(function () {
+      showSyncNote('買取スキャナーのデータの共有に失敗しました（この端末では利用できます）', true);
+    });
+  }
+
+  function fmtCsvSavedAt(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+      String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  loadCsvIndexFromStorage();
+  renderScannerPriceBox();
+  renderJanNameBox();
+
+  function setCsvStatus(msg, isErr) {
+    csvStatus.textContent = msg;
+    csvStatus.className = isErr ? 'err' : '';
+  }
+
+  function processCsvText(text) {
+    var rows = parseCsv(text);
+    if (rows.length < 2) { setCsvStatus('CSVの内容を読み取れませんでした', true); return; }
+    var header = rows[0];
+    var meta = buildCsvColumns(header);
+    if (meta.janIdx < 0 || meta.priceCols.length === 0) {
+      setCsvStatus('JANコードまたは買取価格の列が見つかりませんでした', true);
+      return;
+    }
+
+    var byJan = {};
+    state.templates.forEach(function (t) {
+      var jan = (t.janCode || '').trim();
+      if (jan) byJan[jan] = t;
+    });
+
+    var matches = [];
+    var newCandidates = [];
+    var newIndex = {};
+    var newNameIndex = {};
+    // Camera/lens-only subset of the two indexes above, synced to Firebase
+    // (see saveScannerIndexToFirebase) so every device shows the same
+    // scanner reference data without each one re-loading the CSV — kept
+    // separate from newIndex/newNameIndex, which stay unscoped locally.
+    var sharedIndex = {};
+    var sharedNameIndex = {};
+    for (var r = 1; r < rows.length; r++) {
+      var row = rows[r];
+      if (!row || row.length === 0) continue;
+      var jan = (row[meta.janIdx] || '').trim();
+      if (!jan) continue;
+
+      var offers = [];
+      meta.priceCols.forEach(function (c) {
+        var raw = row[c.idx];
+        if (!raw) return;
+        var val = parseFloat(String(raw).replace(/[^0-9.\-]/g, ''));
+        if (isFinite(val) && val > 0) offers.push({ shop: c.shop, price: val });
+      });
+      if (offers.length === 0) continue;
+      offers.sort(function (a, b) { return b.price - a.price; });
+      var top5 = offers.slice(0, 5);
+      var topPrice = top5[0].price;
+      newIndex[jan] = top5;
+      // Collect every distinct name a shop's own "○○_商品名" column has for
+      // this row (not just the first one) — one shop may include a color or
+      // variant suffix ("[ホワイト]") that another omits.
+      var namesForRow = [];
+      meta.nameIdxs.forEach(function (ni) {
+        var v = (row[ni] || '').trim();
+        if (v && namesForRow.indexOf(v) === -1) namesForRow.push(v);
+      });
+      if (namesForRow.length) newNameIndex[jan] = namesForRow;
+
+      var isCam = isCameraCategory(row, meta.catIdxs);
+      if (isCam) {
+        sharedIndex[jan] = top5;
+        if (namesForRow.length) sharedNameIndex[jan] = namesForRow;
+      }
+
+      var tmpl = byJan[jan];
+      if (tmpl) {
+        matches.push({
+          templateId: tmpl.id,
+          name: tmpl.englishName,
+          janCode: jan,
+          oldPrice: tmpl.basePriceJPY,
+          newPrice: topPrice,
+          offers: top5,
+          selected: topPrice !== tmpl.basePriceJPY
+        });
+      } else if (isCam) {
+        newCandidates.push({
+          janCode: jan,
+          refName: firstNonEmpty(row, meta.nameIdxs),
+          price: topPrice,
+          offers: top5,
+          selected: false,
+          englishName: ''
+        });
+      }
+    }
+
+    csvMatches = matches;
+    csvNewCandidates = newCandidates;
+    csvNewSearchTerm = '';
+    csvIndexByJan = newIndex;
+    csvNameByJan = newNameIndex;
+    saveCsvIndexToStorage();
+    saveScannerIndexToFirebase(sharedIndex, sharedNameIndex);
+
+    var summaryParts = [];
+    summaryParts.push((rows.length - 1) + '行を確認しました');
+    summaryParts.push('相場の更新候補: ' + matches.length + '件');
+    summaryParts.push('新規登録の候補（カメラ・レンズ関連）: ' + newCandidates.length + '件');
+    setCsvStatus(summaryParts.join(' ／ '));
+
+    renderCsvReview();
+    renderCsvNewSection();
+    renderScannerPriceBox();
+    renderJanNameBox();
+  }
+
+  function renderCsvReview() {
+    if (csvMatches.length === 0) { csvReviewArea.innerHTML = ''; return; }
+    var changedCount = csvMatches.filter(function (m) { return m.selected; }).length;
+    var html = '<div class="csv-review-head">' +
+      '<label class="checkbox-row"><input type="checkbox" id="csvSelectAll"' + (changedCount === csvMatches.length ? ' checked' : '') + '> すべて選択</label>' +
+      '<span class="count">' + changedCount + ' / ' + csvMatches.length + ' 件選択中</span>' +
+    '</div>';
+    html += '<div class="csv-review-list">' + csvMatches.map(function (m, i) {
+      var offersText = m.offers.map(function (o) {
+        return '<span class="shop">' + esc(o.shop) + '</span> &yen;' + Math.round(o.price).toLocaleString('ja-JP');
+      }).join(' ／ ');
+      return (
+        '<label class="csv-review-row">' +
+          '<input type="checkbox" class="csv-row-check" data-idx="' + i + '"' + (m.selected ? ' checked' : '') + '>' +
+          '<div class="csv-review-main">' +
+            '<div class="csv-review-name">' + esc(m.name) + '</div>' +
+            '<div class="csv-review-jan">' + esc(m.janCode) + '</div>' +
+            '<div class="csv-review-prices">' +
+              '<span class="csv-review-old">&yen;' + Math.round(m.oldPrice).toLocaleString('ja-JP') + '</span>' +
+              '<span>&rarr;</span>' +
+              '<span class="csv-review-new">&yen;' + Math.round(m.newPrice).toLocaleString('ja-JP') + '</span>' +
+            '</div>' +
+            '<div class="csv-review-offers">' + offersText + '</div>' +
+          '</div>' +
+        '</label>'
+      );
+    }).join('') + '</div>';
+    html += '<button class="btn-primary" id="csvApplyBtn">選択した相場を更新（' + changedCount + '件）</button>';
+    csvReviewArea.innerHTML = html;
+
+    var selectAll = document.getElementById('csvSelectAll');
+    selectAll.addEventListener('change', function () {
+      csvMatches.forEach(function (m) { m.selected = selectAll.checked; });
+      renderCsvReview();
+    });
+    csvReviewArea.querySelectorAll('.csv-row-check').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var idx = parseInt(cb.getAttribute('data-idx'), 10);
+        csvMatches[idx].selected = cb.checked;
+        renderCsvReview();
+      });
+    });
+    var applyBtn = document.getElementById('csvApplyBtn');
+    applyBtn.addEventListener('click', function () {
+      var toApply = csvMatches.filter(function (m) { return m.selected; });
+      if (toApply.length === 0) return;
+      if (!state.db) { setCsvStatus('同期の準備中です。少し待ってからお試しください', true); return; }
+      applyBtn.disabled = true;
+      Promise.all(toApply.map(function (m) {
+        return state.db.collection('templates').doc(m.templateId).update({
+          basePriceJPY: m.newPrice,
+          updatedAt: new Date().toISOString()
+        }).catch(function () {});
+      })).then(function () {
+        setCsvStatus(toApply.length + '件の相場を更新しました');
+        csvMatches = [];
+        csvReviewArea.innerHTML = '';
+        csvFileInput.value = '';
+      });
+    });
+  }
+
+  function renderCsvNewSection() {
+    if (csvNewCandidates.length === 0) { csvNewArea.innerHTML = ''; return; }
+
+    var term = csvNewSearchTerm.trim().toLowerCase();
+    var filtered = !term ? [] : csvNewCandidates.filter(function (c) {
+      return c.refName.toLowerCase().indexOf(term) >= 0 || c.janCode.indexOf(term) >= 0;
+    });
+    var shown = filtered.slice(0, CSV_NEW_DISPLAY_CAP);
+
+    var html = '<div class="csv-new-section">';
+    html += '<div class="csv-new-summary">新規登録の候補: ' + csvNewCandidates.length + '件（カメラ・レンズ関連で、まだ登録していない商品）。商品名やJANコードで絞り込んでから、英語の商品名を入力して登録してください。</div>';
+    html += '<input type="text" class="csv-new-search" id="csvNewSearch" placeholder="商品名やJANコードで検索（例：EOS R5, シグマ）" value="' + esc(csvNewSearchTerm) + '">';
+
+    if (!term) {
+      html += '<div class="csv-new-more">検索するとここに候補が表示されます。</div>';
+    } else if (filtered.length === 0) {
+      html += '<div class="csv-new-more">一致する候補が見つかりませんでした。</div>';
+    } else {
+      html += '<div class="csv-review-list" id="csvNewList">' + shown.map(function (c) {
+        var idx = csvNewCandidates.indexOf(c);
+        var offersText = c.offers.map(function (o) {
+          return '<span class="shop">' + esc(o.shop) + '</span> &yen;' + Math.round(o.price).toLocaleString('ja-JP');
+        }).join(' ／ ');
+        return (
+          '<div class="csv-review-row csv-new-row" data-idx="' + idx + '">' +
+            '<div class="csv-new-row-top">' +
+              '<input type="checkbox" class="csv-new-check" data-idx="' + idx + '"' + (c.selected ? ' checked' : '') + '>' +
+              '<div class="csv-review-main">' +
+                '<div class="csv-new-refname">参考（サイト側の表示名）: ' + esc(c.refName || '（名称なし）') + '</div>' +
+                '<div class="csv-review-jan">' + esc(c.janCode) + '</div>' +
+                '<div class="csv-review-prices"><span class="csv-review-new">&yen;' + Math.round(c.price).toLocaleString('ja-JP') + '</span></div>' +
+                '<div class="csv-review-offers">' + offersText + '</div>' +
+              '</div>' +
+            '</div>' +
+            '<input type="text" class="csv-new-name-input" data-idx="' + idx + '" placeholder="英語の商品名を入力（例：Canon EOS R5 Body）" value="' + esc(c.englishName) + '">' +
+          '</div>'
+        );
+      }).join('') + '</div>';
+      if (filtered.length > shown.length) {
+        html += '<div class="csv-new-more">' + filtered.length + '件中' + shown.length + '件を表示しています。絞り込みを詳しくすると探しやすくなります。</div>';
+      }
+      var selectedCount = csvNewCandidates.filter(function (c) { return c.selected && c.englishName.trim(); }).length;
+      html += '<button class="btn-primary" id="csvNewApplyBtn">選択した商品を登録（' + selectedCount + '件）</button>';
+    }
+    html += '</div>';
+    csvNewArea.innerHTML = html;
+
+    var searchInput = document.getElementById('csvNewSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        csvNewSearchTerm = searchInput.value;
+        renderCsvNewSection();
+        var moved = document.getElementById('csvNewSearch');
+        if (moved) { moved.focus(); moved.setSelectionRange(moved.value.length, moved.value.length); }
+      });
+    }
+    csvNewArea.querySelectorAll('.csv-new-check').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var idx = parseInt(cb.getAttribute('data-idx'), 10);
+        csvNewCandidates[idx].selected = cb.checked;
+        renderCsvNewSection();
+      });
+    });
+    csvNewArea.querySelectorAll('.csv-new-name-input').forEach(function (input) {
+      input.addEventListener('input', function () {
+        var idx = parseInt(input.getAttribute('data-idx'), 10);
+        csvNewCandidates[idx].englishName = input.value;
+        csvNewCandidates[idx].selected = !!input.value.trim();
+        var btn = document.getElementById('csvNewApplyBtn');
+        if (btn) {
+          var n = csvNewCandidates.filter(function (c) { return c.selected && c.englishName.trim(); }).length;
+          btn.textContent = '選択した商品を登録（' + n + '件）';
+        }
+      });
+    });
+    var newApplyBtn = document.getElementById('csvNewApplyBtn');
+    if (newApplyBtn) {
+      newApplyBtn.addEventListener('click', function () {
+        var toRegister = csvNewCandidates.filter(function (c) { return c.selected && c.englishName.trim(); });
+        if (toRegister.length === 0) return;
+        if (!state.db) { setCsvStatus('同期の準備中です。少し待ってからお試しください', true); return; }
+        newApplyBtn.disabled = true;
+        var margin = state.settings.marginPercent;
+        var fx = state.settings.fxRate;
+        var round = state.settings.roundTo100;
+        Promise.all(toRegister.map(function (c) {
+          return upsertTemplate(c.englishName.trim(), c.price, margin, fx, round, c.janCode);
+        })).then(function () {
+          var doneIdxs = {};
+          toRegister.forEach(function (c) { doneIdxs[csvNewCandidates.indexOf(c)] = true; });
+          csvNewCandidates = csvNewCandidates.filter(function (c, i) { return !doneIdxs[i]; });
+          setCsvStatus(toRegister.length + '件を新しく登録しました');
+          renderCsvNewSection();
+        });
+      });
+    }
+  }
+
+  csvFileInput.addEventListener('change', function () {
+    var file = csvFileInput.files && csvFileInput.files[0];
+    if (!file) return;
+    setCsvStatus('読み込み中…');
+    csvReviewArea.innerHTML = '';
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      try { processCsvText(e.target.result); }
+      catch (err) { setCsvStatus('CSVの読み取りに失敗しました', true); }
+    };
+    reader.onerror = function () { setCsvStatus('ファイルの読み込みに失敗しました', true); };
+    reader.readAsText(file, 'UTF-8');
+  });
+
+  // ---------- bulk add (毎週の入荷リストをまとめて登録) ----------
+  var bulkText = document.getElementById('bulkText');
+  var bulkAddBtn = document.getElementById('bulkAddBtn');
+
+  // A long digit-only token (JAN/EAN barcode length) is treated as a JAN
+  // code rather than a price.
+  function isJanLike(token) {
+    return /^\d{8,14}$/.test(String(token || '').trim());
+  }
+
+  // Simple format: one line per product. Accepts 2 or 3 fields separated by
+  // TAB or comma:
+  //   name, price              (existing behavior)
+  //   name, JAN code           (price omitted — reused from the last known
+  //                              price for that product, resolved when the
+  //                              line is actually added)
+  //   name, JAN code, price    (matches the order she sends overseas:
+  //                              English name / JAN code / JPY amount)
+  function parseBulkLine(line) {
+    var parts = line.split('\t').map(function (s) { return s.trim(); }).filter(function (s) { return s !== ''; });
+    if (parts.length < 2) {
+      parts = line.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s !== ''; });
+    }
+    if (parts.length < 2) return null;
+    var name = parts[0];
+    if (!name) return null;
+
+    var janCode = '';
+    var price = null;
+
+    if (parts.length >= 3) {
+      janCode = isJanLike(parts[1]) ? parts[1] : '';
+      var priceStr3 = parts.slice(2).join(' ').replace(/[^0-9.\-]/g, '');
+      var p3 = parseFloat(priceStr3);
+      if (isFinite(p3) && p3 > 0) price = p3;
+    } else if (isJanLike(parts[1])) {
+      janCode = parts[1];
+    } else {
+      var priceStr2 = parts[1].replace(/[^0-9.\-]/g, '');
+      var p2 = parseFloat(priceStr2);
+      if (isFinite(p2) && p2 > 0) price = p2;
+    }
+
+    if (!janCode && price === null) return null;
+    return { name: name, price: price, janCode: janCode, quantity: 1 };
+  }
+
+  // When a bulk line gave no price, reuse the last known price already on
+  // file for that product — matched first by name, then by JAN code (names
+  // can vary slightly between lists, JAN codes don't).
+  function resolvePriceForProduct(name, janCode) {
+    var bySlug = state.templates.filter(function (t) { return t.id === slugify(name); })[0];
+    if (bySlug && bySlug.basePriceJPY > 0) return bySlug.basePriceJPY;
+    if (janCode) {
+      var byJan = state.templates.filter(function (t) { return t.janCode && t.janCode === janCode; })[0];
+      if (byJan && byJan.basePriceJPY > 0) return byJan.basePriceJPY;
+    }
+    return null;
+  }
+
+  // Registers/updates just the name + JAN code for a product whose price is
+  // still unknown, without clobbering any price already on file.
+  function upsertTemplateNameJan(name, janCode) {
+    if (!state.db || !name) return Promise.resolve();
+    var id = slugify(name);
+    var ref = state.db.collection('templates').doc(id);
+    return ref.get().then(function (snap) {
+      if (snap.exists) {
+        var payload = { englishName: name, updatedAt: new Date().toISOString() };
+        if (janCode) payload.janCode = janCode;
+        return ref.update(payload);
+      }
+      return ref.set({
+        englishName: name,
+        basePriceJPY: 0,
+        janCode: janCode || '',
+        marginPercent: state.settings.marginPercent,
+        fxRate: state.settings.fxRate,
+        roundTo100: state.settings.roundTo100,
+        updatedAt: new Date().toISOString()
+      });
+    }).catch(function () {});
+  }
+
+  // Block format: matches what is pasted/sent to overseas buyers —
+  // one blank-line-separated block per product:
+  //   English Name (may wrap onto more than one line)
+  //   JAN code, optionally followed by a x/×/✖ separator and a quantity
+  //   JPY<amount>
+  function looksLikeBlockFormat(text) {
+    return /^\s*JPY\s*[\d,]+/im.test(text);
+  }
+
+  function parseBulkBlocks(text) {
+    var blocks = text.split(/\n\s*\n/);
+    var items = [];
+    var errors = 0;
+    blocks.forEach(function (block) {
+      var lines = block.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+      if (!lines.length) return;
+      var janIdx = -1, janCode = '', qty = 1;
+      var priceIdx = -1, price = null;
+      lines.forEach(function (l, i) {
+        if (janIdx === -1) {
+          var janMatch = l.match(/^(\d{6,14})[^0-9]*(\d+)?\s*$/);
+          if (janMatch) {
+            janIdx = i;
+            janCode = janMatch[1];
+            if (janMatch[2]) qty = parseInt(janMatch[2], 10);
+            return;
+          }
+        }
+        if (priceIdx === -1) {
+          var priceMatch = l.match(/^JPY\s*([\d,]+)/i);
+          if (priceMatch) {
+            priceIdx = i;
+            price = parseFloat(priceMatch[1].replace(/,/g, ''));
+          }
+        }
+      });
+      var name = lines.filter(function (_, i) { return i !== janIdx && i !== priceIdx; })
+        .join(' ').replace(/\s+/g, ' ').trim();
+      if (!name || price === null || !isFinite(price) || price <= 0) { errors++; return; }
+      items.push({ name: name, price: price, janCode: janCode, quantity: isFinite(qty) && qty > 0 ? qty : 1 });
+    });
+    return { items: items, errors: errors };
+  }
+
+  bulkAddBtn.addEventListener('click', function () {
+    var raw = bulkText.value;
+    if (!raw.trim()) return;
+    if (!state.db) { showSyncNote('同期の準備中です。少し待ってからお試しください', true); return; }
+
+    var margin = state.settings.marginPercent;
+    var fx = state.settings.fxRate;
+    var round = state.settings.roundTo100;
+    var parsedItems = [];
+    var skipped = 0;
+
+    if (looksLikeBlockFormat(raw)) {
+      var result = parseBulkBlocks(raw);
+      parsedItems = result.items;
+      skipped = result.errors;
+    } else {
+      var lines = raw.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l.length > 0; });
+      lines.forEach(function (line) {
+        var parsed = parseBulkLine(line);
+        if (!parsed) { skipped++; return; }
+        parsedItems.push(parsed);
+      });
+    }
+
+    if (parsedItems.length === 0) {
+      showSyncNote('商品名と相場（またはJANコード）を読み取れませんでした。入力形式をご確認ください', true);
+      return;
+    }
+
+    // A line with no price given falls back to the last known price already
+    // on file for that product (matched by name, then by JAN code).
+    parsedItems.forEach(function (p) {
+      if (p.price === null) {
+        p.price = resolvePriceForProduct(p.name, p.janCode);
+      }
+    });
+
+    var toAdd = parsedItems.filter(function (p) { return p.price !== null; });
+    var needsPrice = parsedItems.filter(function (p) { return p.price === null; });
+
+    var tasks = [];
+    var templateMap = {};
+    toAdd.forEach(function (p) {
+      var proposal = computeProposal(p.price, margin, fx, round);
+      tasks.push(state.db.collection('items').add({
+        englishName: p.name,
+        basePriceJPY: p.price,
+        quantity: p.quantity,
+        janCode: p.janCode,
+        marginPercent: margin,
+        fxRate: fx,
+        roundTo100: round,
+        proposalPriceJPY: proposal,
+        isExample: false,
+        createdAt: new Date().toISOString()
+      }));
+      templateMap[slugify(p.name)] = p;
+    });
+    needsPrice.forEach(function (p) {
+      tasks.push(upsertTemplateNameJan(p.name, p.janCode));
+    });
+
+    bulkAddBtn.disabled = true;
+    Promise.all(tasks).then(function () {
+      Object.keys(templateMap).forEach(function (key) {
+        var p = templateMap[key];
+        upsertTemplate(p.name, p.price, margin, fx, round, p.janCode);
+      });
+      bulkAddBtn.disabled = false;
+      bulkText.value = '';
+      var msg = toAdd.length + '件を商品リストに追加しました';
+      if (needsPrice.length) {
+        msg += '／' + needsPrice.length + '件は価格が分からなかったため、登録済みの商品にのみ登録しました（相場はそちらで入力できます）';
+      }
+      if (skipped) msg += '（' + skipped + '件は読み取れませんでした）';
+      showSyncNote(msg, needsPrice.length > 0 && toAdd.length === 0);
+    }).catch(function (err) {
+      bulkAddBtn.disabled = false;
+      var detail = (err && (err.code || err.message)) ? '（' + (err.code || err.message) + '）' : '';
+      showSyncNote('一括追加中にエラーが発生しました' + detail, true);
+    });
+  });
+
+  // ---------- list rendering ----------
+  var itemList = document.getElementById('itemList');
+  var itemCount = document.getElementById('itemCount');
+  var copyBtn = document.getElementById('copyBtn');
+  var clearListBtn = document.getElementById('clearListBtn');
+  var clearConfirm = document.getElementById('clearConfirm');
+  var csvReminderConfirm = document.getElementById('csvReminderConfirm');
+  var csvReminderText = document.getElementById('csvReminderText');
+  var csvReminderCopyBtn = document.getElementById('csvReminderCopyBtn');
+  var csvReminderCancelBtn = document.getElementById('csvReminderCancelBtn');
+  var clearConfirmText = clearConfirm.querySelector('span');
+  var clearYesBtn = document.getElementById('clearYesBtn');
+  var clearNoBtn = document.getElementById('clearNoBtn');
+  var syncNote = document.getElementById('syncNote');
+
+  function showSyncNote(msg, isErr) {
+    syncNote.textContent = msg || '';
+    syncNote.className = 'sync-note' + (isErr ? ' err' : '');
+    if (msg && !isErr) setTimeout(function () { if (syncNote.textContent === msg) syncNote.textContent = ''; }, 2500);
+  }
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function renderList() {
+    if (!state.itemsLoaded) {
+      itemList.innerHTML = '<div class="empty-state"><span class="glyph">&#9210;</span>読み込み中…</div>';
+      itemCount.textContent = '';
+      return;
+    }
+    itemCount.textContent = state.items.length + ' 件';
+    if (state.items.length === 0) {
+      itemList.innerHTML = '<div class="empty-state"><span class="glyph">&#128247;</span>まだ商品がありません。上のフォームから追加してください。</div>';
+      return;
+    }
+    itemList.innerHTML = state.items.map(renderItemCard).join('');
+    bindItemEvents();
+  }
+
+  function renderItemCard(item) {
+    var editing = state.editingId === item.id;
+    var confirming = state.confirmingId === item.id;
+    var multiplier = (1 + (item.marginPercent || 0) / 100);
+
+    if (editing) {
+      return (
+        '<div class="item-card" data-id="' + item.id + '">' +
+          '<div class="edit-grid">' +
+            '<div class="field full"><label>商品名（英語）</label><input type="text" class="e-name" value="' + esc(item.englishName) + '"></div>' +
+            '<div class="field"><label>相場 (JPY)</label><input type="number" class="e-base" value="' + item.basePriceJPY + '"></div>' +
+            '<div class="field"><label>数量</label><input type="number" min="1" step="1" class="e-qty" value="' + (item.quantity || 1) + '"></div>' +
+            '<div class="field full"><label>JANコード</label><input type="text" class="e-jan" value="' + esc(item.janCode || '') + '"></div>' +
+            '<div class="field"><label>マージン率 (%)</label><input type="number" class="e-margin" value="' + item.marginPercent + '"></div>' +
+            '<div class="field"><label>為替レート（割る数値）</label><input type="number" step="0.001" class="e-fx" value="' + item.fxRate + '"></div>' +
+            '<div class="field"><label class="checkbox-row" style="margin-top:22px;"><input type="checkbox" class="e-round" ' + (item.roundTo100 ? 'checked' : '') + '>100円丸め</label></div>' +
+            '<div class="edit-actions">' +
+              '<button class="btn-primary e-save">保存</button>' +
+              '<button class="btn-ghost e-cancel">キャンセル</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="item-card" data-id="' + item.id + '">' +
+        '<div class="row-top">' +
+          '<div>' +
+            '<span class="name">' + esc(item.englishName) + (item.isExample ? '<span class="example-badge">例</span>' : '') + '</span>' +
+            '<div class="note">JAN: ' + (item.janCode ? esc(item.janCode) : '&mdash;') + ' &nbsp;/&nbsp; 数量: ' + (item.quantity || 1) + '</div>' +
+          '</div>' +
+          '<div class="readout">' +
+            '<div class="price mono">' + fmtYen(item.proposalPriceJPY) + '</div>' +
+            '<div class="unit">提案価格</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="calc-trail mono">' +
+          '<span>' + fmtYen(item.basePriceJPY) + '</span><span class="op">&times;</span>' +
+          '<span>' + multiplier.toFixed(2) + '</span><span class="op">&divide;</span>' +
+          '<span>' + Number(item.fxRate).toFixed(3) + '</span>' +
+          (item.roundTo100 ? '<span class="op">&rarr;</span><span>100円丸め</span>' : '') +
+        '</div>' +
+        (confirming ?
+          '<div class="confirm-row"><span>この商品を削除しますか？</span><div class="btns">' +
+            '<button class="btn-danger d-yes">削除する</button>' +
+            '<button class="btn-ghost d-no">キャンセル</button>' +
+          '</div></div>'
+        :
+          '<div class="actions"><button class="btn-ghost i-edit">編集</button><button class="btn-danger i-delete">削除</button></div>'
+        ) +
+      '</div>'
+    );
+  }
+
+  function bindItemEvents() {
+    itemList.querySelectorAll('.i-edit').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.editingId = btn.closest('.item-card').getAttribute('data-id');
+        state.confirmingId = null;
+        renderList();
+      });
+    });
+    itemList.querySelectorAll('.i-delete').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.confirmingId = btn.closest('.item-card').getAttribute('data-id');
+        renderList();
+      });
+    });
+    itemList.querySelectorAll('.d-no').forEach(function (btn) {
+      btn.addEventListener('click', function () { state.confirmingId = null; renderList(); });
+    });
+    itemList.querySelectorAll('.d-yes').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.closest('.item-card').getAttribute('data-id');
+        if (state.db) {
+          state.db.collection('items').doc(id).delete()
+            .catch(function () { showSyncNote('削除に失敗しました', true); });
+        }
+        state.confirmingId = null;
+      });
+    });
+    itemList.querySelectorAll('.e-cancel').forEach(function (btn) {
+      btn.addEventListener('click', function () { state.editingId = null; renderList(); });
+    });
+    itemList.querySelectorAll('.e-save').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var card = btn.closest('.item-card');
+        var id = card.getAttribute('data-id');
+        var name = card.querySelector('.e-name').value.trim();
+        var base = parseFloat(card.querySelector('.e-base').value);
+        var qty = parseInt(card.querySelector('.e-qty').value, 10);
+        var jan = card.querySelector('.e-jan').value.trim();
+        var margin = parseFloat(card.querySelector('.e-margin').value);
+        var fx = parseFloat(card.querySelector('.e-fx').value);
+        var round = card.querySelector('.e-round').checked;
+        if (!name || !isFinite(base) || base <= 0) return;
+        if (!isFinite(qty) || qty <= 0) qty = 1;
+        if (!isFinite(margin)) margin = 0;
+        if (!isFinite(fx) || fx <= 0) fx = 1;
+        var proposal = computeProposal(base, margin, fx, round);
+        if (state.db) {
+          state.db.collection('items').doc(id).update({
+            englishName: name,
+            basePriceJPY: base,
+            quantity: qty,
+            janCode: jan,
+            marginPercent: margin,
+            fxRate: fx,
+            roundTo100: round,
+            proposalPriceJPY: proposal,
+            updatedAt: new Date().toISOString()
+          }).catch(function () { showSyncNote('保存に失敗しました', true); });
+          upsertTemplate(name, base, margin, fx, round, jan);
+        }
+        state.editingId = null;
+      });
+    });
+  }
+
+  function performCopyList() {
+    var blocks = state.items.map(function (it) {
+      var qty = it.quantity || 1;
+      return it.englishName + '\n' + (it.janCode || '') + '✖️' + qty + '\nJPY' + Math.round(it.proposalPriceJPY);
+    });
+    var text = blocks.join('\n\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showSyncNote('送付用リストをコピーしました');
+      }).catch(function () {
+        showSyncNote('コピーできませんでした', true);
+      });
+    }
+  }
+
+  // Every time she's about to finalize the list for sending, remind her to
+  // load a fresh 買取スキャナー CSV first, so prices reflect the latest data.
+  copyBtn.addEventListener('click', function () {
+    if (!state.items.length) return;
+    csvReminderText.textContent = csvIndexSavedAt
+      ? '買取スキャナーのCSVは読み込み済みです（最終読み込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '）。最新のデータですか？'
+      : '買取スキャナーのCSVをまだ読み込んでいません。最新の相場を反映しますか？';
+    csvReminderConfirm.hidden = false;
+  });
+
+  csvReminderCopyBtn.addEventListener('click', function () {
+    csvReminderConfirm.hidden = true;
+    performCopyList();
+  });
+
+  csvReminderCancelBtn.addEventListener('click', function () {
+    csvReminderConfirm.hidden = true;
+    var details = document.getElementById('csvDetails');
+    if (details) {
+      details.open = true;
+      details.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  clearListBtn.addEventListener('click', function () {
+    if (!state.items.length) {
+      showSyncNote('商品リストは空です');
+      return;
+    }
+    clearConfirmText.textContent = '商品リストの' + state.items.length + '件をすべて削除しますか？（登録済みの商品はそのまま残ります）';
+    clearConfirm.hidden = false;
+  });
+
+  clearNoBtn.addEventListener('click', function () {
+    clearConfirm.hidden = true;
+  });
+
+  clearYesBtn.addEventListener('click', function () {
+    if (!state.db) {
+      clearConfirm.hidden = true;
+      return;
+    }
+    clearYesBtn.disabled = true;
+    var ids = state.items.map(function (it) { return it.id; });
+    Promise.all(ids.map(function (id) {
+      return state.db.collection('items').doc(id).delete().catch(function () {});
+    })).then(function () {
+      clearYesBtn.disabled = false;
+      clearConfirm.hidden = true;
+      showSyncNote('商品リストをクリアしました');
+    });
+  });
+
+  // ---------- Firebase-backed db adapter ----------
+  // This page runs as a normal, standalone webpage (opened directly, or
+  // hosted anywhere) rather than inside a Claude artifact viewer, so it
+  // talks to a real Firebase Realtime Database instead of the Claude
+  // artifact "db" capability. This adapter mirrors just the small slice of
+  // that capability's API (doc/collection/get/set/update/delete/onSnapshot/
+  // orderBy/limit) that the rest of this page already uses, so none of the
+  // business logic below had to change.
+  var FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBQ3flrqjgVV-fgfVF3DvDsowLsQASYLUk",
+    authDomain: "trip-app-a1746.firebaseapp.com",
+    databaseURL: "https://trip-app-a1746-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "trip-app-a1746",
+    storageBucket: "trip-app-a1746.firebasestorage.app",
+    messagingSenderId: "529959327002",
+    appId: "1:529959327002:web:9e98a8aa9b6afae54208a3"
+  };
+  // Nested under the same top-level key Export Desk already writes to
+  // successfully (kntk_export_desk) — as its own sibling key (pricer_data),
+  // never touching Export Desk's own "data" node — since a brand-new
+  // top-level key may not be covered by this project's existing Firebase
+  // security rules.
+  var FIREBASE_ROOT = 'kntk_export_desk/pricer_data';
+
+  function wrapDocSnap(snap) {
+    return { exists: snap.exists(), data: function () { return snap.val() || {}; } };
+  }
+
+  function makeDocRef(ref) {
+    return {
+      get: function () { return ref.once('value').then(wrapDocSnap); },
+      set: function (data) { return ref.set(data); },
+      update: function (data) { return ref.update(data); },
+      delete: function () { return ref.remove(); },
+      onSnapshot: function (next, err) {
+        ref.on('value', function (snap) { next(wrapDocSnap(snap)); }, err);
+      }
+    };
+  }
+
+  function makeQuery(ref, orderField, orderDir, limitN) {
+    return {
+      onSnapshot: function (next, err) {
+        ref.on('value', function (snap) {
+          var arr = [];
+          snap.forEach(function (child) {
+            arr.push({ id: child.key, val: child.val() || {} });
+          });
+          if (orderField) {
+            arr.sort(function (a, b) {
+              var av = a.val[orderField], bv = b.val[orderField];
+              if (av === bv) return 0;
+              var cmp = (av > bv) ? 1 : -1;
+              return orderDir === 'desc' ? -cmp : cmp;
+            });
+          }
+          if (limitN) arr = arr.slice(0, limitN);
+          next({
+            docs: arr.map(function (x) {
+              return { id: x.id, data: function () { return x.val; } };
+            })
+          });
+        }, err);
+      }
+    };
+  }
+
+  function makeCollectionRef(ref) {
+    return {
+      doc: function (id) { return makeDocRef(ref.child(id)); },
+      add: function (data) {
+        var key = ref.push().key;
+        return ref.child(key).set(data);
+      },
+      orderBy: function (field, dir) {
+        return {
+          limit: function (n) { return makeQuery(ref, field, dir, n); },
+          onSnapshot: function (next, err) { return makeQuery(ref, field, dir, null).onSnapshot(next, err); }
+        };
+      }
+    };
+  }
+
+  function makeFirebaseDb(rootRef) {
+    return {
+      doc: function (path) { return makeDocRef(rootRef.child(path)); },
+      collection: function (path) { return makeCollectionRef(rootRef.child(path)); }
+    };
+  }
+
+  function loadFailed(msg) {
+    state.settingsLoaded = true;
+    state.itemsLoaded = true;
+    state.templatesLoaded = true;
+    applySettingsToForm();
+    renderList();
+    renderTemplates();
+    showSyncNote(msg, true);
+  }
+
+  // ---------- db wiring ----------
+  function boot() {
+    if (typeof firebase === 'undefined') {
+      loadFailed('通信環境を確認してください（読み込みに失敗しました）');
+      return;
+    }
+    try {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      firebase.auth().signInAnonymously().then(function () {
+        var rootRef = firebase.database().ref(FIREBASE_ROOT);
+        wireDb(makeFirebaseDb(rootRef));
+      }).catch(function () {
+        loadFailed('サーバーに接続できませんでした（通信環境をご確認ください）');
+      });
+    } catch (e) {
+      loadFailed('初期化に失敗しました');
+    }
+  }
+
+  function wireDb(db) {
+    state.db = db;
+
+    db.doc('settings/default').onSnapshot(function (snap) {
+        if (snap.exists) {
+          var d = snap.data();
+          state.settings = {
+            marginPercent: typeof d.marginPercent === 'number' ? d.marginPercent : 3,
+            fxRate: typeof d.fxRate === 'number' && d.fxRate > 0 ? d.fxRate : 1.1,
+            roundTo100: !!d.roundTo100
+          };
+        }
+        state.settingsLoaded = true;
+        applySettingsToForm();
+      }, function () { state.settingsLoaded = true; applySettingsToForm(); });
+
+      db.collection('items').orderBy('createdAt', 'asc').limit(300).onSnapshot(function (qs) {
+        state.items = qs.docs.map(function (d) {
+          var data = d.data() || {};
+          return {
+            id: d.id,
+            englishName: data.englishName || '',
+            basePriceJPY: data.basePriceJPY || 0,
+            quantity: typeof data.quantity === 'number' && data.quantity > 0 ? data.quantity : 1,
+            janCode: data.janCode || '',
+            marginPercent: typeof data.marginPercent === 'number' ? data.marginPercent : 0,
+            fxRate: typeof data.fxRate === 'number' ? data.fxRate : 1,
+            roundTo100: !!data.roundTo100,
+            proposalPriceJPY: data.proposalPriceJPY || 0,
+            isExample: !!data.isExample
+          };
+        });
+        state.itemsLoaded = true;
+        renderList();
+      }, function () {
+        state.itemsLoaded = true;
+        showSyncNote('リストの読み込みに失敗しました', true);
+        renderList();
+      });
+
+      db.collection('templates').orderBy('updatedAt', 'desc').limit(100).onSnapshot(function (qs) {
+        state.templates = qs.docs.map(function (d) {
+          var data = d.data() || {};
+          return {
+            id: d.id,
+            englishName: data.englishName || '',
+            basePriceJPY: data.basePriceJPY || 0,
+            janCode: data.janCode || ''
+          };
+        });
+        state.templatesLoaded = true;
+        renderTemplates();
+      }, function () {
+        state.templatesLoaded = true;
+        renderTemplates();
+      });
+
+      // Shared, cross-device copy of the last loaded 買取スキャナーCSV's
+      // camera/lens price+name index (see saveScannerIndexToFirebase) — so
+      // once CSV is loaded on any one device, every device shows the same
+      // scanner reference data without re-loading the CSV itself. It's
+      // scoped to camera/lens rows only (unlike the local, unscoped
+      // localStorage copy) to keep what syncs to a reasonable size.
+      db.doc('scannerIndex/data').onSnapshot(function (snap) {
+        if (!snap.exists) return;
+        var data = snap.data() || {};
+        if (data.index) Object.assign(csvIndexByJan, data.index);
+        if (data.names) Object.assign(csvNameByJan, data.names);
+        if (data.savedAt) csvIndexSavedAt = data.savedAt;
+        renderScannerPriceBox();
+        renderJanNameBox();
+      }, function () { /* no shared data yet, or offline — local copy still works */ });
+  }
+
+  applySettingsToForm();
+  renderList();
+  renderTemplates();
+  boot();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () { /* offline caching unavailable */ });
+  });
+}
+</script>
+</body>
+</html>
