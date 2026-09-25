@@ -708,22 +708,34 @@
     background: var(--surface);
     flex-wrap: wrap;
   }
-  .list-section > #csvReminderConfirm.confirm-row {
-    margin-top: 8px;
-    padding: 10px 12px;
-    border: 1px solid var(--accent);
-    border-radius: var(--radius-md);
-    background: var(--accent-soft);
-    flex-wrap: wrap;
-  }
-  /* These two are toggled via the `hidden` attribute/property in JS, but the
-     more specific rules above (ID + class) otherwise outrank the browser's
-     default [hidden]{display:none}, which left both permanently visible at
-     the bottom of the product list regardless of state. */
-  #clearConfirm[hidden],
-  #csvReminderConfirm[hidden] {
+  /* Toggled via the `hidden` attribute/property in JS, but the more specific
+     ID + class rule above otherwise outranks the browser's default
+     [hidden]{display:none}, which left it permanently visible at the bottom
+     of the product list regardless of state. */
+  #clearConfirm[hidden] {
     display: none !important;
   }
+
+  .stale-warning {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    background: var(--danger-soft);
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+    cursor: pointer;
+  }
+  .stale-warning:hover { filter: brightness(0.98); }
+  .stale-warning[hidden] { display: none !important; }
+  .stale-warning-icon { font-size: 16px; flex-shrink: 0; }
 
   .item-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 
@@ -886,6 +898,11 @@
   </header>
 
   <main>
+    <button type="button" id="csvStaleWarning" class="stale-warning" hidden>
+      <span class="stale-warning-icon">⚠️</span>
+      <span id="csvStaleWarningText"></span>
+    </button>
+
     <details class="settings" id="settingsDetails">
       <summary>
         <span>デフォルト設定</span>
@@ -955,16 +972,8 @@
           </div>
           <div class="field full" id="janNameBox"></div>
           <div class="field full" id="scannerPriceBox"></div>
-          <div class="field">
-            <label for="inMargin">マージン率 (%)</label>
-            <input type="number" id="inMargin" step="1" inputmode="decimal">
-          </div>
-          <div class="field">
-            <label for="inFx">為替レート（割る数値）</label>
-            <input type="number" id="inFx" step="0.001" inputmode="decimal">
-          </div>
-          <div class="field">
-            <label class="checkbox-row" for="inRound" style="margin-top: 22px;">
+          <div class="field full">
+            <label class="checkbox-row" for="inRound">
               <input type="checkbox" id="inRound">
               100円丸め
             </label>
@@ -983,13 +992,6 @@
           <div class="list-head-btns">
             <button class="btn-ghost" id="copyBtn">送付用リストをコピー</button>
             <button class="btn-ghost" id="clearListBtn">リストをクリア</button>
-          </div>
-        </div>
-        <div id="csvReminderConfirm" class="confirm-row" hidden>
-          <span id="csvReminderText"></span>
-          <div class="btns">
-            <button class="btn-primary" id="csvReminderCopyBtn">コピーする</button>
-            <button class="btn-ghost" id="csvReminderCancelBtn">CSVを読み込みに行く</button>
           </div>
         </div>
         <div id="clearConfirm" class="confirm-row" hidden>
@@ -1094,10 +1096,9 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     defFx.value = state.settings.fxRate;
     defRound.checked = !!state.settings.roundTo100;
     renderSettingsSummary();
-    // keep add-form defaults in sync unless the user already touched them
+    // keep the add-form's round-to-100 checkbox in sync with the default
+    // unless the user already touched it themselves
     if (!addFormTouched) {
-      inMargin.value = state.settings.marginPercent;
-      inFx.value = state.settings.fxRate;
       inRound.checked = !!state.settings.roundTo100;
       updatePreview();
     }
@@ -1134,8 +1135,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var inBase = document.getElementById('inBase');
   var inQty = document.getElementById('inQty');
   var inJan = document.getElementById('inJan');
-  var inMargin = document.getElementById('inMargin');
-  var inFx = document.getElementById('inFx');
   var inRound = document.getElementById('inRound');
   var previewValue = document.getElementById('previewValue');
   var addBtn = document.getElementById('addBtn');
@@ -1146,9 +1145,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var addFormTouched = false;
   var nameSuggestActiveIdx = -1;
 
-  [inMargin, inFx, inRound].forEach(function (el) {
-    el.addEventListener('input', function () { addFormTouched = true; updatePreview(); });
-  });
+  inRound.addEventListener('input', function () { addFormTouched = true; updatePreview(); });
   inBase.addEventListener('input', updatePreview);
   inName.addEventListener('input', function () {
     var typed = inName.value.trim().toLowerCase();
@@ -1279,7 +1276,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   });
 
   function updatePreview() {
-    var val = computeProposal(inBase.value, inMargin.value, inFx.value, inRound.checked);
+    var val = computeProposal(inBase.value, state.settings.marginPercent, state.settings.fxRate, inRound.checked);
     previewValue.textContent = inBase.value ? fmtYen(val) : '—';
   }
 
@@ -1422,7 +1419,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   function guessEnglishName(raw) {
     if (!raw) return '';
     var s = raw;
-    s = s.replace(/[\[［]([^\]／]*?)用[\]／]/g, function (_, inner) {
+    s = s.replace(/[\[［]([^\]］]*?)用[\]］]/g, function (_, inner) {
       return '(for ' + janNameTranslateTerms(inner) + ' Mount)';
     });
     // Same "<brand>用" mount suffix, but written bare (no brackets) — e.g.
@@ -1521,10 +1518,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var qty = parseInt(inQty.value, 10);
     if (!isFinite(qty) || qty <= 0) qty = 1;
     var jan = inJan.value.trim();
-    var margin = parseFloat(inMargin.value);
-    var fx = parseFloat(inFx.value);
-    if (!isFinite(margin)) margin = state.settings.marginPercent;
-    if (!isFinite(fx) || fx <= 0) fx = state.settings.fxRate;
+    var margin = state.settings.marginPercent;
+    var fx = state.settings.fxRate;
     var round = inRound.checked;
     var proposal = computeProposal(base, margin, fx, round);
 
@@ -1557,8 +1552,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     inQty.value = '1';
     inJan.value = '';
     addFormTouched = false;
-    inMargin.value = state.settings.marginPercent;
-    inFx.value = state.settings.fxRate;
     inRound.checked = !!state.settings.roundTo100;
     updatePreview();
   });
@@ -1803,6 +1796,38 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   // for each variant.
   var csvNameByJan = {};
   var csvIndexSavedAt = '';
+  var csvStaleWarning = document.getElementById('csvStaleWarning');
+  var csvStaleWarningText = document.getElementById('csvStaleWarningText');
+  // How many days without a fresh CSV load before the warning banner shows.
+  var CSV_STALE_DAYS = 1;
+  var CSV_STALE_MS = CSV_STALE_DAYS * 24 * 60 * 60 * 1000;
+
+  // Shows a persistent warning banner near the top of the page — checked
+  // whenever the CSV index changes and on an hourly timer — rather than only
+  // asking at the moment she copies the list, so a stale scanner price is
+  // visible as soon as she opens the app.
+  function updateCsvStaleWarning() {
+    if (!csvIndexSavedAt) {
+      csvStaleWarningText.textContent = '買取スキャナーのCSVがまだ読み込まれていません。相場を最新に保つため、下の「CSVから相場を更新・新商品を登録」から読み込んでください。';
+      csvStaleWarning.hidden = false;
+      return;
+    }
+    var savedTime = new Date(csvIndexSavedAt).getTime();
+    if (isNaN(savedTime)) { csvStaleWarning.hidden = true; return; }
+    if (Date.now() - savedTime >= CSV_STALE_MS) {
+      csvStaleWarningText.textContent = '買取スキャナーのCSVが最終読み込みから' + CSV_STALE_DAYS + '日以上経過しています（最終読み込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '）。最新の相場をご確認ください。';
+      csvStaleWarning.hidden = false;
+    } else {
+      csvStaleWarning.hidden = true;
+    }
+  }
+  csvStaleWarning.addEventListener('click', function () {
+    var details = document.getElementById('csvDetails');
+    if (details) {
+      details.open = true;
+      details.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
 
   function loadCsvIndexFromStorage() {
     try {
@@ -1853,6 +1878,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   loadCsvIndexFromStorage();
   renderScannerPriceBox();
   renderJanNameBox();
+  updateCsvStaleWarning();
+  // Re-check hourly so the banner appears on its own if the app is left open
+  // past the staleness threshold, without needing a reload.
+  setInterval(updateCsvStaleWarning, 60 * 60 * 1000);
 
   function setCsvStatus(msg, isErr) {
     csvStatus.textContent = msg;
@@ -1948,6 +1977,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     csvIndexByJan = newIndex;
     csvNameByJan = newNameIndex;
     saveCsvIndexToStorage();
+    updateCsvStaleWarning();
     saveScannerIndexToFirebase(sharedIndex, sharedNameIndex);
 
     var summaryParts = [];
@@ -2353,10 +2383,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var copyBtn = document.getElementById('copyBtn');
   var clearListBtn = document.getElementById('clearListBtn');
   var clearConfirm = document.getElementById('clearConfirm');
-  var csvReminderConfirm = document.getElementById('csvReminderConfirm');
-  var csvReminderText = document.getElementById('csvReminderText');
-  var csvReminderCopyBtn = document.getElementById('csvReminderCopyBtn');
-  var csvReminderCancelBtn = document.getElementById('csvReminderCancelBtn');
   var clearConfirmText = clearConfirm.querySelector('span');
   var clearYesBtn = document.getElementById('clearYesBtn');
   var clearNoBtn = document.getElementById('clearNoBtn');
@@ -2524,28 +2550,11 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
   }
 
-  // Every time she's about to finalize the list for sending, remind her to
-  // load a fresh 買取スキャナー CSV first, so prices reflect the latest data.
+  // CSVの鮮度チェックは送付直前ではなく画面を開いた時点で常に警告バナーとして
+  // 表示する（updateCsvStaleWarning）ので、ここは確認なしでそのままコピーする。
   copyBtn.addEventListener('click', function () {
     if (!state.items.length) return;
-    csvReminderText.textContent = csvIndexSavedAt
-      ? '買取スキャナーのCSVは読み込み済みです（最終読み込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '）。最新のデータですか？'
-      : '買取スキャナーのCSVをまだ読み込んでいません。最新の相場を反映しますか？';
-    csvReminderConfirm.hidden = false;
-  });
-
-  csvReminderCopyBtn.addEventListener('click', function () {
-    csvReminderConfirm.hidden = true;
     performCopyList();
-  });
-
-  csvReminderCancelBtn.addEventListener('click', function () {
-    csvReminderConfirm.hidden = true;
-    var details = document.getElementById('csvDetails');
-    if (details) {
-      details.open = true;
-      details.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   });
 
   clearListBtn.addEventListener('click', function () {
@@ -2767,6 +2776,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         if (data.savedAt) csvIndexSavedAt = data.savedAt;
         renderScannerPriceBox();
         renderJanNameBox();
+        updateCsvStaleWarning();
       }, function () { /* no shared data yet, or offline — local copy still works */ });
   }
 
