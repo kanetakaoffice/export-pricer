@@ -563,17 +563,14 @@
     color: var(--text);
     box-sizing: border-box;
   }
-  .tmpl-row-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-  .tmpl-row .tmpl-add {
-    background: var(--accent);
-    color: var(--accent-contrast);
-    font-weight: 600;
-    font-size: 12px;
-    padding: 8px 14px;
+  /* Plain, non-interactive JAN code readout — not an input, so it can't be
+     nudged/edited by an accidental tap (she never rewrites it here; a
+     mis-tap that deletes or adds a digit is costly to track down and fix). */
+  .tmpl-jan-display {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--text);
+    padding: 2px 0;
   }
   .tmpl-row .tmpl-del {
     background: transparent;
@@ -582,50 +579,45 @@
     padding: 6px 8px;
     border: 1px solid var(--border);
   }
-  .tmpl-new {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--border-soft);
-    flex-wrap: wrap;
-  }
-  .tmpl-new input[type="text"] {
-    flex: 1 1 140px;
-    font: inherit;
-    font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', sans-serif;
-    font-size: 13px;
-    padding: 8px 10px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text);
-  }
-  .tmpl-new input[type="number"] {
-    width: 108px;
-    flex: 0 0 auto;
-    font: inherit;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    padding: 8px 10px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text);
-  }
-  .tmpl-new button {
-    background: var(--surface);
-    color: var(--text);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 8px 14px;
-    border: 1px solid var(--border);
-  }
   .tmpl-empty {
     font-size: 12px;
     color: var(--text-muted);
     padding: 6px 2px;
   }
+
+  /* The side drawer has its own fixed width (min(320px, 86vw)) no matter how
+     wide the screen is, so the general ".tmpl-list becomes 2 columns on a
+     wide screen" rule further below (@media min-width:820px) squeezed each
+     column down to ~150px inside the drawer — long product names ended up
+     wrapping one word per line into a tall, hard-to-scan stack. This keeps
+     the registered-products list a single column and trims it down to a
+     tighter, plainer row (smaller text, a divider instead of a boxed card)
+     so it reads more like a compact list than a stack of cards, while
+     still showing the full product name (wrapped, not truncated) since
+     she needs to read the whole thing. Higher specificity than the plain
+     ".tmpl-list"/".tmpl-row" rules, so it wins regardless of viewport
+     width. */
+  .side-drawer .tmpl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .side-drawer .tmpl-row {
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border-soft);
+    border-radius: 0;
+    padding: 9px 2px;
+    gap: 6px;
+  }
+  .side-drawer .tmpl-row:last-child { border-bottom: none; }
+  .side-drawer .tmpl-row-top .tmpl-name {
+    font-size: 12.5px;
+    line-height: 1.4;
+  }
+  .side-drawer .tmpl-field label { font-size: 9px; }
+  .side-drawer .tmpl-jan-display { font-size: 12px; }
+  .side-drawer .tmpl-row .tmpl-del { font-size: 10px; padding: 4px 7px; }
 
   .bulk-body { padding: 4px 16px 16px; border-top: 1px solid var(--border-soft); }
   .bulk-body .btn-primary { margin-top: 10px; }
@@ -800,7 +792,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: min(320px, 86vw);
+    width: min(380px, 90vw);
     background: var(--surface);
     box-shadow: 2px 0 16px var(--shadow);
     z-index: 50;
@@ -1130,14 +1122,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         <div class="tmpl-head">
           <button class="btn-ghost" id="tmplCopyBtn">一覧表をコピー</button>
         </div>
-        <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。JANコードは入力欄から離れると自動で保存されます。相場は「新しい商品を追加」から再登録すると更新されます。「商品リストに追加」を押すと、登録済みの相場で商品リストに追加されます。</p>
+        <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。相場は「新しい商品を追加」から再登録すると更新されます。</p>
         <div class="tmpl-list" id="tmplList"></div>
-        <div class="tmpl-new">
-          <input type="text" id="tmplName" placeholder="商品名（英語）">
-          <input type="number" id="tmplPrice" step="1" inputmode="numeric" placeholder="相場 (JPY)">
-          <input type="text" id="tmplJan" inputmode="numeric" placeholder="JANコード（任意）">
-          <button id="tmplRegisterBtn">商品を登録</button>
-        </div>
       </div>
     </details>
   </div>
@@ -1154,7 +1140,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     templates: [],
     templatesLoaded: false,
     editingId: null,
-    confirmingId: null
+    confirmingId: null,
+    confirmingTemplateId: null
   };
 
   function slugify(name) {
@@ -1729,10 +1716,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
 
   // ---------- templates (登録済みの商品 / product master) ----------
   var tmplList = document.getElementById('tmplList');
-  var tmplName = document.getElementById('tmplName');
-  var tmplPrice = document.getElementById('tmplPrice');
-  var tmplJan = document.getElementById('tmplJan');
-  var tmplRegisterBtn = document.getElementById('tmplRegisterBtn');
   var tmplCopyBtn = document.getElementById('tmplCopyBtn');
   var tmplSummaryCount = document.getElementById('tmplSummaryCount');
 
@@ -1759,19 +1742,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       return ref.set(payload).catch(function () {});
     }).catch(function () {});
   }
-
-  tmplRegisterBtn.addEventListener('click', function () {
-    var name = tmplName.value.trim();
-    var price = parseFloat(tmplPrice.value);
-    var jan = tmplJan.value.trim();
-    if (!name) { tmplName.focus(); return; }
-    if (!isFinite(price) || price <= 0) { tmplPrice.focus(); return; }
-    if (!state.db) { showSyncNote('同期の準備中です。少し待ってから登録してください', true); return; }
-    upsertTemplate(name, price, state.settings.marginPercent, state.settings.fxRate, state.settings.roundTo100, jan);
-    tmplName.value = '';
-    tmplPrice.value = '';
-    tmplJan.value = '';
-  });
 
   tmplCopyBtn.addEventListener('click', function () {
     if (!state.templates.length) { showSyncNote('登録済みの商品がありません', true); return; }
@@ -1802,65 +1772,41 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       return;
     }
     tmplList.innerHTML = state.templates.map(function (t) {
+      var confirming = state.confirmingTemplateId === t.id;
       return (
         '<div class="tmpl-row" data-id="' + t.id + '">' +
           '<div class="tmpl-row-top">' +
             '<span class="tmpl-name">' + esc(t.englishName) + '</span>' +
-            '<button class="tmpl-del">削除</button>' +
+            (confirming ? '' : '<button class="tmpl-del">削除</button>') +
           '</div>' +
           '<div class="tmpl-row-fields">' +
-            '<div class="tmpl-field"><label>JANコード</label><input type="text" class="tmpl-jan-input" value="' + esc(t.janCode || '') + '" inputmode="numeric" placeholder="4901234567890"></div>' +
+            '<div class="tmpl-field"><label>JANコード</label><div class="tmpl-jan-display mono">' + (t.janCode ? esc(t.janCode) : '&mdash;') + '</div></div>' +
           '</div>' +
-          '<div class="tmpl-row-actions"><button class="tmpl-add">商品リストに追加</button></div>' +
+          (confirming ?
+            '<div class="confirm-row"><span>この商品の登録を削除しますか？（商品リストには影響しません）</span><div class="btns">' +
+              '<button class="btn-danger tmpl-del-yes">削除する</button>' +
+              '<button class="btn-ghost tmpl-del-no">キャンセル</button>' +
+            '</div></div>'
+          : '') +
         '</div>'
       );
     }).join('');
-    tmplList.querySelectorAll('.tmpl-jan-input').forEach(function (input) {
-      input.addEventListener('change', function () {
-        var id = input.closest('.tmpl-row').getAttribute('data-id');
-        if (!state.db) return;
-        state.db.collection('templates').doc(id).update({
-          janCode: input.value.trim(),
-          updatedAt: new Date().toISOString()
-        }).catch(function () { showSyncNote('JANコードの保存に失敗しました', true); });
-      });
-    });
-    tmplList.querySelectorAll('.tmpl-add').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var row = btn.closest('.tmpl-row');
-        var id = row.getAttribute('data-id');
-        var t = state.templates.filter(function (x) { return x.id === id; })[0];
-        if (!t) return;
-        var price = t.basePriceJPY;
-        if (!isFinite(price) || price <= 0) {
-          showSyncNote('この商品の相場が未登録です。「新しい商品を追加」から相場を入力して登録してください', true);
-          return;
-        }
-        var margin = state.settings.marginPercent;
-        var fx = state.settings.fxRate;
-        var round = state.settings.roundTo100;
-        var proposal = computeProposal(price, margin, fx, round);
-        if (!state.db) { showSyncNote('同期の準備中です', true); return; }
-        state.db.collection('items').add({
-          englishName: t.englishName,
-          basePriceJPY: price,
-          quantity: 1,
-          janCode: t.janCode || '',
-          marginPercent: margin,
-          fxRate: fx,
-          roundTo100: round,
-          proposalPriceJPY: proposal,
-          isExample: false,
-          createdAt: new Date().toISOString()
-        }).catch(function () { showSyncNote('追加に失敗しました', true); });
-        state.db.collection('templates').doc(id).update({
-          updatedAt: new Date().toISOString()
-        }).catch(function () {});
-      });
-    });
     tmplList.querySelectorAll('.tmpl-del').forEach(function (btn) {
       btn.addEventListener('click', function () {
+        state.confirmingTemplateId = btn.closest('.tmpl-row').getAttribute('data-id');
+        renderTemplates();
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-del-no').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.confirmingTemplateId = null;
+        renderTemplates();
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-del-yes').forEach(function (btn) {
+      btn.addEventListener('click', function () {
         var id = btn.closest('.tmpl-row').getAttribute('data-id');
+        state.confirmingTemplateId = null;
         if (state.db) {
           state.db.collection('templates').doc(id).delete()
             .catch(function () { showSyncNote('削除に失敗しました', true); });
