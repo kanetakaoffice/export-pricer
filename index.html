@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -813,6 +814,34 @@
   .side-drawer-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
   .side-drawer-body { display: flex; flex-direction: column; gap: 16px; }
 
+  /* A plain external link out of the drawer (e.g. to the separate Export
+     Desk invoice tool) — visually distinct from the two collapsible
+     <details> above it, since tapping it navigates away instead of
+     expanding in place. */
+  .drawer-section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+    margin: -6px 2px -6px;
+  }
+  .drawer-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .drawer-link:hover { border-color: var(--accent); color: var(--accent-strong); }
+  .drawer-link-arrow { color: var(--text-muted); font-size: 13px; font-weight: 400; }
+
   .item-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 
   .item-card {
@@ -1126,6 +1155,12 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         <div class="tmpl-list" id="tmplList"></div>
       </div>
     </details>
+
+    <div class="drawer-section-label">その他のツール</div>
+    <a class="drawer-link" href="https://kanetakaoffice.github.io/export-desk/" target="_blank" rel="noopener">
+      <span>Export Desk（インボイス作成）</span>
+      <span class="drawer-link-arrow">&#8599;</span>
+    </a>
   </div>
 </nav>
 
