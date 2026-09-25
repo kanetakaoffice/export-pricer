@@ -108,9 +108,36 @@
     padding-bottom: 12px;
     border-bottom: 1px solid var(--border-soft);
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .menu-btn {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .menu-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 1px;
   }
   header.topbar .brand {
     display: flex;
@@ -635,10 +662,16 @@
   }
   .add-grid .field.full { grid-column: 1 / -1; }
 
+  .field-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    min-height: 14px;
+  }
+
   .preview-line {
     grid-column: 1 / -1;
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     justify-content: space-between;
     background: var(--surface-2);
     border: 1px dashed var(--border);
@@ -646,12 +679,26 @@
     padding: 10px 12px;
     margin-top: 2px;
   }
-  .preview-line .label { font-size: 12px; color: var(--text-muted); }
+  .preview-line .label { font-size: 12px; color: var(--text-muted); padding-top: 2px; }
   .preview-line .value {
     font-size: 20px;
     font-weight: 600;
     color: var(--accent-strong);
   }
+  .preview-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .prev-value {
+    font-size: 11px;
+    color: var(--text-muted);
+    min-height: 14px;
+  }
+  .prev-arrow { font-weight: 700; margin-left: 2px; }
+  .prev-arrow.up { color: #1a7f37; }
+  .prev-arrow.down { color: var(--danger); }
 
   button {
     font: inherit;
@@ -736,6 +783,43 @@
   .stale-warning:hover { filter: brightness(0.98); }
   .stale-warning[hidden] { display: none !important; }
   .stale-warning-icon { font-size: 16px; flex-shrink: 0; }
+
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 40;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .drawer-overlay.open { opacity: 1; }
+  .drawer-overlay[hidden] { display: none; }
+
+  .side-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(320px, 86vw);
+    background: var(--surface);
+    box-shadow: 2px 0 16px var(--shadow);
+    z-index: 50;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
+    padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .side-drawer.open { transform: translateX(0); }
+  .side-drawer-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .side-drawer-head h2 { margin: 0; font-size: 16px; font-weight: 700; }
+  .side-drawer-body { display: flex; flex-direction: column; gap: 16px; }
 
   .item-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 
@@ -865,14 +949,12 @@
       gap: 16px;
     }
     .layout-grid > #csvDetails,
-    .layout-grid > .add-card,
-    .layout-grid > .bulk-details,
-    .layout-grid > .tmpl-details {
+    .layout-grid > .add-card {
       grid-column: 1;
     }
     .layout-grid > .list-section {
       grid-column: 2;
-      grid-row: 1 / span 4;
+      grid-row: 1 / span 2;
       position: sticky;
       top: 90px;
       max-height: calc(100vh - 106px);
@@ -890,9 +972,14 @@
 
 <div class="app">
   <header class="topbar">
-    <div class="brand">
-      <span class="eyebrow">輸出価格設定ツール</span>
-      <h1>KANETAKA Export Pricer</h1>
+    <div class="topbar-left">
+      <button type="button" id="menuBtn" class="menu-btn" aria-label="メニューを開く">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="brand">
+        <span class="eyebrow">輸出価格設定ツール</span>
+        <h1>KANETAKA Export Pricer</h1>
+      </div>
     </div>
     <div class="count" id="itemCount">読み込み中…</div>
   </header>
@@ -961,6 +1048,7 @@
           <div class="field">
             <label for="inBase">相場 (JPY)</label>
             <input type="number" id="inBase" step="1" inputmode="numeric" placeholder="180000">
+            <div class="field-hint" id="prevBaseHint"></div>
           </div>
           <div class="field">
             <label for="inQty">数量</label>
@@ -980,7 +1068,10 @@
           </div>
           <div class="preview-line">
             <span class="label">提案価格プレビュー</span>
-            <span class="value mono" id="previewValue">&mdash;</span>
+            <span class="preview-values">
+              <span class="value mono" id="previewValue">&mdash;</span>
+              <span class="prev-value mono" id="prevProposalValue"></span>
+            </span>
           </div>
         </div>
         <button class="btn-primary" id="addBtn">リストに追加</button>
@@ -1004,44 +1095,53 @@
         <div class="item-list" id="itemList"></div>
         <div class="sync-note" id="syncNote"></div>
       </section>
-
-      <details class="settings bulk-details" id="bulkDetails">
-        <summary>
-          <span>商品を一括登録</span>
-          <span class="chev">&#9656;</span>
-        </summary>
-        <div class="tmpl-body bulk-body">
-          <p class="tmpl-hint">毎週の入荷リストをそのまま貼り付けられます。「商品名 → JANコード✖️数量 → JPY金額」の3行1組（海外へ送る形式）をそのまま貼り付けてもOKです。スプレッドシートからコピーした「商品名<span class="mono">Tab</span>相場」の1行1商品形式にも対応しています。金額が分からない場合は「商品名<span class="mono">,</span>JANコード」だけでも登録でき、価格は前回登録済みのものを自動で引き継ぎます（見つからない場合は登録済みの商品にのみ名前とJANコードを登録します）。</p>
-          <textarea id="bulkText" class="bulk-textarea" rows="5" placeholder="Canon EOS R5 Body	185000
-Canon RF24-70mm F2.8	210000
-Sony FE 50mm F1.2 GM	160000"></textarea>
-          <button class="btn-primary" id="bulkAddBtn">まとめてリストに追加</button>
-        </div>
-      </details>
-
-      <details class="settings tmpl-details" id="tmplDetails">
-        <summary>
-          <span>登録済みの商品</span>
-          <span class="current mono" id="tmplSummaryCount">&hellip;</span>
-          <span class="chev">&#9656;</span>
-        </summary>
-        <div class="tmpl-body">
-          <div class="tmpl-head">
-            <button class="btn-ghost" id="tmplCopyBtn">一覧表をコピー</button>
-          </div>
-          <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。相場やJANコードは入力欄から離れると自動で保存されます。「商品リストに追加」を押すと、その時点の相場で商品リストに追加されます。</p>
-          <div class="tmpl-list" id="tmplList"></div>
-          <div class="tmpl-new">
-            <input type="text" id="tmplName" placeholder="商品名（英語）">
-            <input type="number" id="tmplPrice" step="1" inputmode="numeric" placeholder="相場 (JPY)">
-            <input type="text" id="tmplJan" inputmode="numeric" placeholder="JANコード（任意）">
-            <button id="tmplRegisterBtn">商品を登録</button>
-          </div>
-        </div>
-      </details>
     </div>
   </main>
 </div>
+
+<div id="drawerOverlay" class="drawer-overlay" hidden></div>
+<nav id="sideDrawer" class="side-drawer" aria-hidden="true">
+  <div class="side-drawer-head">
+    <h2>メニュー</h2>
+    <button type="button" id="drawerCloseBtn" class="btn-ghost">閉じる</button>
+  </div>
+  <div class="side-drawer-body">
+    <details class="settings bulk-details" id="bulkDetails">
+      <summary>
+        <span>商品を一括登録</span>
+        <span class="chev">&#9656;</span>
+      </summary>
+      <div class="tmpl-body bulk-body">
+        <p class="tmpl-hint">毎週の入荷リストをそのまま貼り付けられます。「商品名 → JANコード✖️数量 → JPY金額」の3行1組（海外へ送る形式）をそのまま貼り付けてもOKです。スプレッドシートからコピーした「商品名<span class="mono">Tab</span>相場」の1行1商品形式にも対応しています。金額が分からない場合は「商品名<span class="mono">,</span>JANコード」だけでも登録でき、価格は前回登録済みのものを自動で引き継ぎます（見つからない場合は登録済みの商品にのみ名前とJANコードを登録します）。</p>
+        <textarea id="bulkText" class="bulk-textarea" rows="5" placeholder="Canon EOS R5 Body	185000
+Canon RF24-70mm F2.8	210000
+Sony FE 50mm F1.2 GM	160000"></textarea>
+        <button class="btn-primary" id="bulkAddBtn">まとめてリストに追加</button>
+      </div>
+    </details>
+
+    <details class="settings tmpl-details" id="tmplDetails">
+      <summary>
+        <span>登録済みの商品</span>
+        <span class="current mono" id="tmplSummaryCount">&hellip;</span>
+        <span class="chev">&#9656;</span>
+      </summary>
+      <div class="tmpl-body">
+        <div class="tmpl-head">
+          <button class="btn-ghost" id="tmplCopyBtn">一覧表をコピー</button>
+        </div>
+        <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。JANコードは入力欄から離れると自動で保存されます。相場は「新しい商品を追加」から再登録すると更新されます。「商品リストに追加」を押すと、登録済みの相場で商品リストに追加されます。</p>
+        <div class="tmpl-list" id="tmplList"></div>
+        <div class="tmpl-new">
+          <input type="text" id="tmplName" placeholder="商品名（英語）">
+          <input type="number" id="tmplPrice" step="1" inputmode="numeric" placeholder="相場 (JPY)">
+          <input type="text" id="tmplJan" inputmode="numeric" placeholder="JANコード（任意）">
+          <button id="tmplRegisterBtn">商品を登録</button>
+        </div>
+      </div>
+    </details>
+  </div>
+</nav>
 
 <script>
 (function () {
@@ -1079,6 +1179,34 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var raw = (base * (1 + margin / 100)) / fx;
     return roundTo100 ? Math.round(raw / 100) * 100 : Math.round(raw);
   }
+
+  // ---------- side drawer (商品を一括登録 / 登録済みの商品) ----------
+  var menuBtn = document.getElementById('menuBtn');
+  var sideDrawer = document.getElementById('sideDrawer');
+  var drawerOverlay = document.getElementById('drawerOverlay');
+  var drawerCloseBtn = document.getElementById('drawerCloseBtn');
+
+  function openDrawer() {
+    drawerOverlay.hidden = false;
+    // Set hidden=false first, then add the .open class on the next frame so
+    // the opacity/transform transitions actually animate instead of jumping.
+    requestAnimationFrame(function () {
+      sideDrawer.classList.add('open');
+      drawerOverlay.classList.add('open');
+    });
+    sideDrawer.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeDrawer() {
+    sideDrawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    sideDrawer.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    setTimeout(function () { drawerOverlay.hidden = true; }, 250);
+  }
+  menuBtn.addEventListener('click', openDrawer);
+  drawerCloseBtn.addEventListener('click', closeDrawer);
+  drawerOverlay.addEventListener('click', closeDrawer);
 
   // ---------- settings summary / defaults panel ----------
   var defMargin = document.getElementById('defMargin');
@@ -1142,8 +1270,15 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var janNameBox = document.getElementById('janNameBox');
   var clearNameBtn = document.getElementById('clearNameBtn');
   var nameSuggest = document.getElementById('nameSuggest');
+  var prevBaseHint = document.getElementById('prevBaseHint');
+  var prevProposalValue = document.getElementById('prevProposalValue');
   var addFormTouched = false;
   var nameSuggestActiveIdx = -1;
+  // The template matched by the currently-typed product name (exact match),
+  // kept so both the 相場 hint and the preview's previous-proposal/arrow can
+  // be recomputed whenever the base price is edited, not just when the name
+  // itself changes.
+  var currentMatchedTemplate = null;
 
   inRound.addEventListener('input', function () { addFormTouched = true; updatePreview(); });
   inBase.addEventListener('input', updatePreview);
@@ -1156,18 +1291,22 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       inBase.value = '';
       inQty.value = 1;
       inJan.value = '';
+      currentMatchedTemplate = null;
       updatePreview();
       renderScannerPriceBox();
       renderJanNameBox();
       return;
     }
     var match = state.templates.filter(function (t) { return t.englishName.toLowerCase() === typed; })[0];
+    currentMatchedTemplate = match || null;
     if (match) {
       if (!inBase.value) inBase.value = match.basePriceJPY;
       if (!inJan.value && match.janCode) inJan.value = match.janCode;
       updatePreview();
       renderScannerPriceBox();
       renderJanNameBox();
+    } else {
+      renderPrevPriceInfo();
     }
   });
   inJan.addEventListener('input', function () {
@@ -1278,6 +1417,37 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   function updatePreview() {
     var val = computeProposal(inBase.value, state.settings.marginPercent, state.settings.fxRate, inRound.checked);
     previewValue.textContent = inBase.value ? fmtYen(val) : '—';
+    renderPrevPriceInfo();
+  }
+
+  // Shows the last known price/proposal for the product currently matched by
+  // name (currentMatchedTemplate) — a small "前回の相場" hint under the 相場
+  // field, and a "前回 ¥…" line under the preview with a colored ↑/↓ arrow
+  // comparing today's proposal against what was proposed last time.
+  function renderPrevPriceInfo() {
+    if (!currentMatchedTemplate || !currentMatchedTemplate.basePriceJPY) {
+      prevBaseHint.textContent = '';
+      prevProposalValue.innerHTML = '';
+      return;
+    }
+    prevBaseHint.textContent = '前回の相場: ' + fmtYen(currentMatchedTemplate.basePriceJPY);
+
+    var prevProposal = computeProposal(
+      currentMatchedTemplate.basePriceJPY,
+      currentMatchedTemplate.marginPercent,
+      currentMatchedTemplate.fxRate,
+      currentMatchedTemplate.roundTo100
+    );
+    var arrowHtml = '';
+    if (inBase.value) {
+      var currentVal = computeProposal(inBase.value, state.settings.marginPercent, state.settings.fxRate, inRound.checked);
+      if (isFinite(currentVal) && currentVal !== prevProposal) {
+        arrowHtml = currentVal > prevProposal
+          ? ' <span class="prev-arrow up">&uarr;</span>'
+          : ' <span class="prev-arrow down">&darr;</span>';
+      }
+    }
+    prevProposalValue.innerHTML = '前回 ' + fmtYen(prevProposal) + arrowHtml;
   }
 
   // Shows the last loaded CSV's買取価格 comparison for whatever JAN code is
@@ -1552,6 +1722,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     inQty.value = '1';
     inJan.value = '';
     addFormTouched = false;
+    currentMatchedTemplate = null;
     inRound.checked = !!state.settings.roundTo100;
     updatePreview();
   });
@@ -1638,7 +1809,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             '<button class="tmpl-del">削除</button>' +
           '</div>' +
           '<div class="tmpl-row-fields">' +
-            '<div class="tmpl-field"><label>相場 (JPY)</label><input type="number" class="tmpl-price-input" value="' + t.basePriceJPY + '" step="1" inputmode="numeric"></div>' +
             '<div class="tmpl-field"><label>JANコード</label><input type="text" class="tmpl-jan-input" value="' + esc(t.janCode || '') + '" inputmode="numeric" placeholder="4901234567890"></div>' +
           '</div>' +
           '<div class="tmpl-row-actions"><button class="tmpl-add">商品リストに追加</button></div>' +
@@ -1655,27 +1825,17 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         }).catch(function () { showSyncNote('JANコードの保存に失敗しました', true); });
       });
     });
-    tmplList.querySelectorAll('.tmpl-price-input').forEach(function (input) {
-      input.addEventListener('change', function () {
-        var id = input.closest('.tmpl-row').getAttribute('data-id');
-        var price = parseFloat(input.value);
-        if (!state.db || !isFinite(price) || price <= 0) return;
-        state.db.collection('templates').doc(id).update({
-          basePriceJPY: price,
-          updatedAt: new Date().toISOString()
-        }).then(function () {
-          showSyncNote('相場を保存しました');
-        }).catch(function () { showSyncNote('相場の保存に失敗しました', true); });
-      });
-    });
     tmplList.querySelectorAll('.tmpl-add').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var row = btn.closest('.tmpl-row');
         var id = row.getAttribute('data-id');
         var t = state.templates.filter(function (x) { return x.id === id; })[0];
         if (!t) return;
-        var price = parseFloat(row.querySelector('.tmpl-price-input').value);
-        if (!isFinite(price) || price <= 0) return;
+        var price = t.basePriceJPY;
+        if (!isFinite(price) || price <= 0) {
+          showSyncNote('この商品の相場が未登録です。「新しい商品を追加」から相場を入力して登録してください', true);
+          return;
+        }
         var margin = state.settings.marginPercent;
         var fx = state.settings.fxRate;
         var round = state.settings.roundTo100;
@@ -1694,7 +1854,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           createdAt: new Date().toISOString()
         }).catch(function () { showSyncNote('追加に失敗しました', true); });
         state.db.collection('templates').doc(id).update({
-          basePriceJPY: price,
           updatedAt: new Date().toISOString()
         }).catch(function () {});
       });
@@ -2752,7 +2911,12 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             id: d.id,
             englishName: data.englishName || '',
             basePriceJPY: data.basePriceJPY || 0,
-            janCode: data.janCode || ''
+            janCode: data.janCode || '',
+            // Kept so the add-form can show what was actually proposed last
+            // time (renderPrevPriceInfo), not just the last base price.
+            marginPercent: typeof data.marginPercent === 'number' ? data.marginPercent : state.settings.marginPercent,
+            fxRate: typeof data.fxRate === 'number' && data.fxRate > 0 ? data.fxRate : state.settings.fxRate,
+            roundTo100: !!data.roundTo100
           };
         });
         state.templatesLoaded = true;
