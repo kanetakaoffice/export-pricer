@@ -1349,12 +1349,21 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   // phones and on desktop.
   function escRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
+  // Strips spaces/hyphens/slashes so "eosr5" also matches a registered name
+  // like "Canon EOS R5 Body" or "EOS-R5" — typing it without the separators
+  // used to fail to match at all, since a plain substring search needs them
+  // to line up exactly.
+  function normalizeForMatch(s) {
+    return String(s || '').toLowerCase().replace(/[\s\-\/]+/g, '');
+  }
+
   function renderNameSuggestions(query) {
     var typed = query.trim();
     if (!typed || !state.templates.length) { hideNameSuggestions(); return; }
     var typedLower = typed.toLowerCase();
+    var typedNorm = normalizeForMatch(typed);
     var matches = state.templates.filter(function (t) {
-      return t.englishName.toLowerCase().indexOf(typedLower) !== -1;
+      return normalizeForMatch(t.englishName).indexOf(typedNorm) !== -1;
     });
     // Exact match already filled the form silently — no need to show a
     // single suggestion identical to what's already typed.
@@ -1364,16 +1373,20 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
     if (!matches.length) { hideNameSuggestions(); return; }
     matches.sort(function (a, b) {
-      var ai = a.englishName.toLowerCase().indexOf(typedLower);
-      var bi = b.englishName.toLowerCase().indexOf(typedLower);
+      var ai = normalizeForMatch(a.englishName).indexOf(typedNorm);
+      var bi = normalizeForMatch(b.englishName).indexOf(typedNorm);
       if (ai !== bi) return ai - bi;
       return a.englishName.localeCompare(b.englishName);
     });
     matches = matches.slice(0, 8);
-    var re = new RegExp('(' + escRegExp(typed) + ')', 'ig');
     nameSuggestActiveIdx = -1;
     nameSuggest.innerHTML = matches.map(function (t) {
-      var highlighted = esc(t.englishName).replace(re, '<mark>$1</mark>');
+      // Highlighting only makes sense when the typed text appears literally
+      // (same spacing/punctuation) in the name — for a normalized match
+      // (typed without spaces/-//) the name is shown plain, rather than
+      // mis-highlighting an unrelated stretch of characters.
+      var re = new RegExp('(' + escRegExp(typed) + ')', 'ig');
+      var highlighted = re.test(t.englishName) ? esc(t.englishName).replace(new RegExp('(' + escRegExp(typed) + ')', 'ig'), '<mark>$1</mark>') : esc(t.englishName);
       return '<button type="button" class="name-suggest-item" data-name="' + esc(t.englishName) + '">' + highlighted + '</button>';
     }).join('');
     nameSuggest.classList.add('open');
