@@ -1044,12 +1044,13 @@
           <span class="chev">&#9656;</span>
         </summary>
         <div class="settings-body csv-body">
-          <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
+          <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を、③すでに商品リストに追加済みの商品も価格が変わっていれば更新候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
           <div class="field full">
             <input type="file" id="csvFileInput" accept=".csv,text/csv">
           </div>
           <div class="field full" id="csvStatus"></div>
           <div class="field full" id="csvReviewArea"></div>
+          <div class="field full" id="csvItemReviewArea"></div>
           <div class="field full" id="csvNewArea"></div>
         </div>
       </details>
@@ -1927,8 +1928,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var csvFileInput = document.getElementById('csvFileInput');
   var csvStatus = document.getElementById('csvStatus');
   var csvReviewArea = document.getElementById('csvReviewArea');
+  var csvItemReviewArea = document.getElementById('csvItemReviewArea');
   var csvNewArea = document.getElementById('csvNewArea');
   var csvMatches = [];
+  var csvItemMatches = [];
   var csvNewCandidates = [];
   var csvNewSearchTerm = '';
   var CSV_NEW_DISPLAY_CAP = 60;
@@ -2061,7 +2064,19 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       if (jan) byJan[jan] = t;
     });
 
+    // Items already placed in the 商品リスト keep their own basePriceJPY
+    // captured at the time they were added — a JAN code can appear on more
+    // than one item (added twice, different quantities), so this is a
+    // one-to-many index, unlike the templates one above.
+    var itemsByJan = {};
+    state.items.forEach(function (it) {
+      var jan = (it.janCode || '').trim();
+      if (!jan) return;
+      (itemsByJan[jan] = itemsByJan[jan] || []).push(it);
+    });
+
     var matches = [];
+    var itemMatches = [];
     var newCandidates = [];
     var newIndex = {};
     var newNameIndex = {};
@@ -2116,7 +2131,23 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           offers: top5,
           selected: topPrice !== tmpl.basePriceJPY
         });
-      } else if (isCam) {
+      }
+      (itemsByJan[jan] || []).forEach(function (it) {
+        if (topPrice === it.basePriceJPY) return;
+        itemMatches.push({
+          itemId: it.id,
+          name: it.englishName,
+          janCode: jan,
+          oldPrice: it.basePriceJPY,
+          newPrice: topPrice,
+          offers: top5,
+          marginPercent: it.marginPercent,
+          fxRate: it.fxRate,
+          roundTo100: it.roundTo100,
+          selected: true
+        });
+      });
+      if (!tmpl && isCam) {
         newCandidates.push({
           janCode: jan,
           refName: firstNonEmpty(row, meta.nameIdxs),
@@ -2129,6 +2160,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
 
     csvMatches = matches;
+    csvItemMatches = itemMatches;
     csvNewCandidates = newCandidates;
     csvNewSearchTerm = '';
     csvIndexByJan = newIndex;
@@ -2140,10 +2172,12 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var summaryParts = [];
     summaryParts.push((rows.length - 1) + '行を確認しました');
     summaryParts.push('相場の更新候補: ' + matches.length + '件');
+    summaryParts.push('商品リストの価格更新候補: ' + itemMatches.length + '件');
     summaryParts.push('新規登録の候補（カメラ・レンズ関連）: ' + newCandidates.length + '件');
     setCsvStatus(summaryParts.join(' ／ '));
 
     renderCsvReview();
+    renderCsvItemReview();
     renderCsvNewSection();
     renderScannerPriceBox();
     renderJanNameBox();
@@ -2206,6 +2240,76 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         setCsvStatus(toApply.length + '件の相場を更新しました');
         csvMatches = [];
         csvReviewArea.innerHTML = '';
+        csvFileInput.value = '';
+      });
+    });
+  }
+
+  // Items already placed in the 商品リスト (state.items) keep their own
+  // basePriceJPY captured when they were added — reloading the CSV only
+  // offered to update the master 登録済みの商品 (templates) list, leaving
+  // already-added items at their old price even once the buyback price had
+  // moved. This mirrors renderCsvReview but writes to state.items instead,
+  // recomputing proposalPriceJPY with each item's own margin/fx/rounding.
+  function renderCsvItemReview() {
+    if (csvItemMatches.length === 0) { csvItemReviewArea.innerHTML = ''; return; }
+    var changedCount = csvItemMatches.filter(function (m) { return m.selected; }).length;
+    var html = '<div class="csv-review-head">' +
+      '<label class="checkbox-row"><input type="checkbox" id="csvItemSelectAll"' + (changedCount === csvItemMatches.length ? ' checked' : '') + '> すべて選択</label>' +
+      '<span class="count">' + changedCount + ' / ' + csvItemMatches.length + ' 件選択中</span>' +
+    '</div>';
+    html += '<div class="csv-review-list">' + csvItemMatches.map(function (m, i) {
+      var offersText = m.offers.map(function (o) {
+        return '<span class="shop">' + esc(o.shop) + '</span> &yen;' + Math.round(o.price).toLocaleString('ja-JP');
+      }).join(' ／ ');
+      return (
+        '<label class="csv-review-row">' +
+          '<input type="checkbox" class="csv-item-row-check" data-idx="' + i + '"' + (m.selected ? ' checked' : '') + '>' +
+          '<div class="csv-review-main">' +
+            '<div class="csv-review-name">' + esc(m.name) + '</div>' +
+            '<div class="csv-review-jan">' + esc(m.janCode) + '</div>' +
+            '<div class="csv-review-prices">' +
+              '<span class="csv-review-old">&yen;' + Math.round(m.oldPrice).toLocaleString('ja-JP') + '</span>' +
+              '<span>&rarr;</span>' +
+              '<span class="csv-review-new">&yen;' + Math.round(m.newPrice).toLocaleString('ja-JP') + '</span>' +
+            '</div>' +
+            '<div class="csv-review-offers">' + offersText + '</div>' +
+          '</div>' +
+        '</label>'
+      );
+    }).join('') + '</div>';
+    html += '<button class="btn-primary" id="csvItemApplyBtn">選択した商品リストの価格を更新（' + changedCount + '件）</button>';
+    csvItemReviewArea.innerHTML = html;
+
+    var selectAll = document.getElementById('csvItemSelectAll');
+    selectAll.addEventListener('change', function () {
+      csvItemMatches.forEach(function (m) { m.selected = selectAll.checked; });
+      renderCsvItemReview();
+    });
+    csvItemReviewArea.querySelectorAll('.csv-item-row-check').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var idx = parseInt(cb.getAttribute('data-idx'), 10);
+        csvItemMatches[idx].selected = cb.checked;
+        renderCsvItemReview();
+      });
+    });
+    var applyBtn = document.getElementById('csvItemApplyBtn');
+    applyBtn.addEventListener('click', function () {
+      var toApply = csvItemMatches.filter(function (m) { return m.selected; });
+      if (toApply.length === 0) return;
+      if (!state.db) { setCsvStatus('同期の準備中です。少し待ってからお試しください', true); return; }
+      applyBtn.disabled = true;
+      Promise.all(toApply.map(function (m) {
+        var proposal = computeProposal(m.newPrice, m.marginPercent, m.fxRate, m.roundTo100);
+        return state.db.collection('items').doc(m.itemId).update({
+          basePriceJPY: m.newPrice,
+          proposalPriceJPY: proposal,
+          updatedAt: new Date().toISOString()
+        }).catch(function () {});
+      })).then(function () {
+        setCsvStatus(toApply.length + '件の商品リストの価格を更新しました');
+        csvItemMatches = [];
+        csvItemReviewArea.innerHTML = '';
         csvFileInput.value = '';
       });
     });
