@@ -443,7 +443,7 @@
 
   .csv-new-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
   .csv-new-summary { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
-  .csv-new-search {
+  .csv-new-search, .tmpl-search {
     font: inherit;
     font-size: 13px;
     padding: 9px 10px;
@@ -611,6 +611,25 @@
     margin-top: 6px;
   }
   .tmpl-fixed-toggle input { width: 14px; height: 14px; accent-color: var(--accent); }
+  .tmpl-fixed-fields {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .tmpl-fixed-fields input {
+    width: 100%;
+    font: inherit;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    padding: 7px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--text);
+  }
   .tmpl-field {
     display: flex;
     flex-direction: column;
@@ -1230,6 +1249,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           <button class="btn-ghost" id="tmplCopyBtn">一覧表をコピー</button>
         </div>
         <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。相場は「新しい商品を追加」から再登録すると更新されます。</p>
+        <input type="text" class="tmpl-search" id="tmplSearch" placeholder="型番やJANコードで検索">
         <div class="tmpl-list" id="tmplList"></div>
       </div>
     </details>
@@ -1620,6 +1640,13 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   });
 
   function updatePreview() {
+    // A 固定 product's preview always shows its fixed 計算後の価格 as-is,
+    // not a margin/fx recalculation from whatever's currently in 相場.
+    if (currentMatchedTemplate && currentMatchedTemplate.priceFixed && currentMatchedTemplate.fixedProposalPriceJPY != null) {
+      previewValue.textContent = fmtYen(currentMatchedTemplate.fixedProposalPriceJPY);
+      renderPrevPriceInfo();
+      return;
+    }
     var val = computeProposal(inBase.value, state.settings.marginPercent, state.settings.fxRate, inRound.checked);
     previewValue.textContent = inBase.value ? fmtYen(val) : '—';
     renderPrevPriceInfo();
@@ -1630,6 +1657,11 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   // field, and a "前回 ¥…" line under the preview with a colored ↑/↓ arrow
   // comparing today's proposal against what was proposed last time.
   function renderPrevPriceInfo() {
+    if (currentMatchedTemplate && currentMatchedTemplate.priceFixed) {
+      prevBaseHint.textContent = '固定価格の商品です（相場・計算後の価格は変更されません）';
+      prevProposalValue.innerHTML = '';
+      return;
+    }
     if (!currentMatchedTemplate || !currentMatchedTemplate.basePriceJPY) {
       prevBaseHint.textContent = '';
       prevProposalValue.innerHTML = '';
@@ -1898,6 +1930,18 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var round = inRound.checked;
     var proposal = computeProposal(base, margin, fx, round);
 
+    // A 固定 product is added at exactly its locked values, not whatever's
+    // in the form fields — this only engages when the typed name still
+    // matches the matched fixed template, so it can't silently override an
+    // unrelated product that happens to share the same form state.
+    var isFixedAdd = currentMatchedTemplate && currentMatchedTemplate.priceFixed && currentMatchedTemplate.englishName.toLowerCase() === name.toLowerCase();
+    if (isFixedAdd) {
+      base = currentMatchedTemplate.basePriceJPY;
+      proposal = currentMatchedTemplate.fixedProposalPriceJPY != null
+        ? currentMatchedTemplate.fixedProposalPriceJPY
+        : computeProposal(base, margin, fx, round);
+    }
+
     var data = {
       englishName: name,
       basePriceJPY: base,
@@ -1936,6 +1980,14 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var tmplList = document.getElementById('tmplList');
   var tmplCopyBtn = document.getElementById('tmplCopyBtn');
   var tmplSummaryCount = document.getElementById('tmplSummaryCount');
+  var tmplSearch = document.getElementById('tmplSearch');
+  var tmplSearchTerm = '';
+  if (tmplSearch) {
+    tmplSearch.addEventListener('input', function () {
+      tmplSearchTerm = tmplSearch.value;
+      renderTemplates();
+    });
+  }
 
   // Reads the existing template (if any) so an auto-registration from the
   // add form / bulk add never wipes out a JAN code entered separately.
@@ -1989,7 +2041,19 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       tmplList.innerHTML = '<div class="tmpl-empty">まだ登録がありません。下のフォームから登録するか、商品を追加すると自動的に登録されます。</div>';
       return;
     }
-    tmplList.innerHTML = state.templates.map(function (t) {
+    // Search ignores spaces/-// the same way the name-suggest dropdown
+    // does (normalizeForMatch), plus a plain substring match on the JAN
+    // code, so either a partial model number or a JAN code finds it.
+    var term = tmplSearchTerm.trim();
+    var termNorm = normalizeForMatch(term);
+    var visibleTemplates = !term ? state.templates : state.templates.filter(function (t) {
+      return normalizeForMatch(t.englishName).indexOf(termNorm) !== -1 || (t.janCode || '').indexOf(term) !== -1;
+    });
+    if (visibleTemplates.length === 0) {
+      tmplList.innerHTML = '<div class="tmpl-empty">「' + esc(term) + '」に一致する商品が見つかりませんでした。</div>';
+      return;
+    }
+    tmplList.innerHTML = visibleTemplates.map(function (t) {
       var confirming = state.confirmingTemplateId === t.id;
       return (
         '<div class="tmpl-row" data-id="' + t.id + '">' +
@@ -2001,6 +2065,12 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             '<div class="tmpl-field"><label>JANコード</label><div class="tmpl-jan-display mono">' + (t.janCode ? esc(t.janCode) : '&mdash;') + '</div></div>' +
           '</div>' +
           '<label class="tmpl-fixed-toggle"><input type="checkbox" class="tmpl-fixed-check"' + (t.priceFixed ? ' checked' : '') + '> 価格を固定する（CSVでの相場更新の対象外）</label>' +
+          (t.priceFixed ?
+            '<div class="tmpl-fixed-fields">' +
+              '<div class="tmpl-field"><label>固定する相場 (JPY)</label><input type="number" class="tmpl-fixed-base mono" value="' + (t.basePriceJPY || '') + '" step="1" inputmode="numeric"></div>' +
+              '<div class="tmpl-field"><label>固定する計算後の価格 (JPY)</label><input type="number" class="tmpl-fixed-proposal mono" value="' + (t.fixedProposalPriceJPY != null ? t.fixedProposalPriceJPY : '') + '" step="1" inputmode="numeric"></div>' +
+            '</div>'
+          : '') +
           (confirming ?
             '<div class="confirm-row"><span>この商品の登録を削除しますか？（商品リストには影響しません）</span><div class="btns">' +
               '<button class="btn-danger tmpl-del-yes">削除する</button>' +
@@ -2014,7 +2084,37 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       cb.addEventListener('change', function () {
         var id = cb.closest('.tmpl-row').getAttribute('data-id');
         if (!state.db) { cb.checked = !cb.checked; return; }
-        state.db.collection('templates').doc(id).update({ priceFixed: cb.checked })
+        var payload = { priceFixed: cb.checked, updatedAt: new Date().toISOString() };
+        if (cb.checked) {
+          // Seed the 計算後の価格 field with today's computed proposal so it
+          // isn't blank/zero the moment she turns 固定 on — she can then
+          // adjust either value directly.
+          var t = state.templates.filter(function (x) { return x.id === id; })[0];
+          if (t && t.fixedProposalPriceJPY == null) {
+            payload.fixedProposalPriceJPY = computeProposal(t.basePriceJPY, t.marginPercent, t.fxRate, t.roundTo100);
+          }
+        }
+        state.db.collection('templates').doc(id).update(payload)
+          .catch(function () { showSyncNote('保存に失敗しました', true); });
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-fixed-base').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var id = inp.closest('.tmpl-row').getAttribute('data-id');
+        var val = parseFloat(inp.value);
+        if (!isFinite(val) || val < 0) return;
+        if (!state.db) return;
+        state.db.collection('templates').doc(id).update({ basePriceJPY: val, updatedAt: new Date().toISOString() })
+          .catch(function () { showSyncNote('保存に失敗しました', true); });
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-fixed-proposal').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var id = inp.closest('.tmpl-row').getAttribute('data-id');
+        var val = parseFloat(inp.value);
+        if (!isFinite(val) || val < 0) return;
+        if (!state.db) return;
+        state.db.collection('templates').doc(id).update({ fixedProposalPriceJPY: val, updatedAt: new Date().toISOString() })
           .catch(function () { showSyncNote('保存に失敗しました', true); });
       });
     });
@@ -3236,7 +3336,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             // When true, CSVから相場を更新 never offers this product (or any
             // list item sharing its JAN code) as an update candidate — for
             // items with a set price unrelated to the secondhand market.
-            priceFixed: !!data.priceFixed
+            priceFixed: !!data.priceFixed,
+            // The exact 相場/計算後の価格 she typed in for a fixed product —
+            // used as-is (never recomputed from margin/fx) when adding it.
+            fixedProposalPriceJPY: typeof data.fixedProposalPriceJPY === 'number' ? data.fixedProposalPriceJPY : null
           };
         });
         state.templatesLoaded = true;
