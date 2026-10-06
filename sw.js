@@ -1,4 +1,4 @@
-const CACHE_NAME = "export-pricer-v1";
+const CACHE_NAME = "export-pricer-v2";
 const ASSETS = [
   "./",
   "./index.html",
