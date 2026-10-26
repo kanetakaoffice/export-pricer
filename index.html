@@ -830,6 +830,12 @@
     min-height: 14px;
   }
 
+  .field-hint-inline {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
   .preview-line {
     grid-column: 1 / -1;
     display: flex;
@@ -3299,12 +3305,14 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         '<div class="item-card" data-id="' + item.id + '">' +
           '<div class="edit-grid">' +
             '<div class="field full"><label>商品名（英語）</label><input type="text" class="e-name" value="' + esc(item.englishName) + '"></div>' +
+            '<div class="field full"><label>提示する価格 (JPY)　<span class="field-hint-inline">相手企業に提示する最終的な価格。直接変更できます</span></label><input type="number" class="e-proposal mono" value="' + item.proposalPriceJPY + '"></div>' +
             '<div class="field"><label>相場 (JPY)</label><input type="number" class="e-base" value="' + item.basePriceJPY + '"></div>' +
             '<div class="field"><label>数量</label><input type="number" min="1" step="1" class="e-qty" value="' + (item.quantity || 1) + '"></div>' +
             '<div class="field full"><label>JANコード</label><input type="text" class="e-jan" value="' + esc(item.janCode || '') + '"></div>' +
             '<div class="field"><label>マージン率 (%)</label><input type="number" class="e-margin" value="' + item.marginPercent + '"></div>' +
             '<div class="field"><label>為替レート（割る数値）</label><input type="number" step="0.001" class="e-fx" value="' + item.fxRate + '"></div>' +
             '<div class="field"><label class="checkbox-row" style="margin-top:22px;"><input type="checkbox" class="e-round" ' + (item.roundTo100 ? 'checked' : '') + '>100円丸め</label></div>' +
+            '<div class="field full"><button type="button" class="btn-ghost e-recalc">相場・マージン・為替から再計算する</button></div>' +
             '<div class="edit-actions">' +
               '<button class="btn-primary e-save">保存</button>' +
               '<button class="btn-ghost e-cancel">キャンセル</button>' +
@@ -3375,6 +3383,19 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     itemList.querySelectorAll('.e-cancel').forEach(function (btn) {
       btn.addEventListener('click', function () { state.editingId = null; renderList(); });
     });
+    itemList.querySelectorAll('.e-recalc').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var card = btn.closest('.item-card');
+        var base = parseFloat(card.querySelector('.e-base').value);
+        var margin = parseFloat(card.querySelector('.e-margin').value);
+        var fx = parseFloat(card.querySelector('.e-fx').value);
+        var round = card.querySelector('.e-round').checked;
+        if (!isFinite(base) || base <= 0) return;
+        if (!isFinite(margin)) margin = 0;
+        if (!isFinite(fx) || fx <= 0) fx = 1;
+        card.querySelector('.e-proposal').value = computeProposal(base, margin, fx, round);
+      });
+    });
     itemList.querySelectorAll('.e-save').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var card = btn.closest('.item-card');
@@ -3386,11 +3407,17 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         var margin = parseFloat(card.querySelector('.e-margin').value);
         var fx = parseFloat(card.querySelector('.e-fx').value);
         var round = card.querySelector('.e-round').checked;
+        var proposalInput = parseFloat(card.querySelector('.e-proposal').value);
         if (!name || !isFinite(base) || base <= 0) return;
         if (!isFinite(qty) || qty <= 0) qty = 1;
         if (!isFinite(margin)) margin = 0;
         if (!isFinite(fx) || fx <= 0) fx = 1;
-        var proposal = computeProposal(base, margin, fx, round);
+        // 相手企業に提示する価格は、この欄に入っている値をそのまま使う
+        // （相場・マージン・為替からの自動計算値で上書きしない）。入力が
+        // 空や不正な場合のみ、従来通り自動計算した値にフォールバックする。
+        var proposal = (isFinite(proposalInput) && proposalInput >= 0)
+          ? proposalInput
+          : computeProposal(base, margin, fx, round);
         if (state.db) {
           state.db.collection('items').doc(id).update({
             englishName: name,
