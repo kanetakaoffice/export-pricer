@@ -732,6 +732,84 @@
     outline-offset: 1px;
   }
 
+  .client-card h2 {
+    margin: 0 0 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+  .client-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .client-row select,
+  .client-row input[type="text"] {
+    font: inherit;
+    font-size: 14px;
+    padding: 9px 10px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .client-row select { flex: 1 1 160px; min-width: 0; }
+  .client-row input[type="text"] { flex: 1 1 160px; min-width: 0; font-family: 'IBM Plex Sans JP', 'IBM Plex Sans', sans-serif; }
+  .client-row select:focus,
+  .client-row input[type="text"]:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .client-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    min-height: 14px;
+    margin-top: 8px;
+  }
+  .client-hint.active {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-weight: 600;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+  }
+  .client-manage-list { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+  .client-manage-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12.5px;
+    padding: 4px 2px;
+  }
+  .client-manage-row .client-del {
+    font-size: 11px;
+    padding: 3px 7px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .item-card .client-badge {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-strong);
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: 5px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .tmpl-client-fixed {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border-soft);
+  }
+  .tmpl-client-fixed .tmpl-fixed-toggle { color: var(--accent-strong); }
+
   .add-card h2 {
     margin: 0 0 12px;
     font-size: 14px;
@@ -1152,6 +1230,19 @@
         </div>
       </details>
 
+      <section class="card client-card">
+        <h2>取引先</h2>
+        <div class="client-row">
+          <select id="clientSelect">
+            <option value="">— 選択なし —</option>
+          </select>
+          <input type="text" id="clientNameInput" placeholder="新しい取引先名" autocomplete="off">
+          <button type="button" class="btn-ghost" id="clientAddBtn">追加</button>
+        </div>
+        <div class="client-hint" id="clientHint"></div>
+        <div id="clientManageArea"></div>
+      </section>
+
       <section class="card add-card">
         <h2>新しい商品を追加</h2>
         <div class="add-grid">
@@ -1274,8 +1365,41 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     templatesLoaded: false,
     editingId: null,
     confirmingId: null,
-    confirmingTemplateId: null
+    confirmingTemplateId: null,
+    // 取引先（買い手企業）ごとの固定価格。clients は名前だけの小さな登録リスト、
+    // clientPrices は「この取引先には、この商品はこの価格で」という組み合わせの
+    // 一覧（ドキュメントID = clientId + '__' + templateId）。商品自体のグローバルな
+    // 固定価格（templates.priceFixed）より優先される。
+    clients: [],
+    clientsLoaded: false,
+    clientPrices: [],
+    clientPricesLoaded: false,
+    selectedClientId: null,
+    confirmingClientId: null
   };
+
+  var CLIENT_SELECT_STORAGE_KEY = 'exportPricer.selectedClientId';
+  function loadSelectedClientId() {
+    try { return localStorage.getItem(CLIENT_SELECT_STORAGE_KEY) || null; } catch (e) { return null; }
+  }
+  function saveSelectedClientId(id) {
+    try {
+      if (id) localStorage.setItem(CLIENT_SELECT_STORAGE_KEY, id);
+      else localStorage.removeItem(CLIENT_SELECT_STORAGE_KEY);
+    } catch (e) {}
+  }
+  state.selectedClientId = loadSelectedClientId();
+
+  function clientPriceDocId(clientId, templateId) { return clientId + '__' + templateId; }
+
+  // 現在選択中の取引先に、その商品専用の固定価格が登録されていればそれを返す。
+  function findClientPrice(clientId, templateId) {
+    if (!clientId || !templateId) return null;
+    return state.clientPrices.filter(function (cp) { return cp.clientId === clientId && cp.templateId === templateId; })[0] || null;
+  }
+  function currentClient() {
+    return state.clients.filter(function (c) { return c.id === state.selectedClientId; })[0] || null;
+  }
 
   function slugify(name) {
     var s = String(name || '').toLowerCase().trim()
@@ -1484,6 +1608,11 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var nameSuggest = document.getElementById('nameSuggest');
   var prevBaseHint = document.getElementById('prevBaseHint');
   var prevProposalValue = document.getElementById('prevProposalValue');
+  var clientSelect = document.getElementById('clientSelect');
+  var clientNameInput = document.getElementById('clientNameInput');
+  var clientAddBtn = document.getElementById('clientAddBtn');
+  var clientHint = document.getElementById('clientHint');
+  var clientManageArea = document.getElementById('clientManageArea');
   var addFormTouched = false;
   var nameSuggestActiveIdx = -1;
   // The template matched by the currently-typed product name (exact match),
@@ -1491,6 +1620,99 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   // be recomputed whenever the base price is edited, not just when the name
   // itself changes.
   var currentMatchedTemplate = null;
+
+  // ---------- 取引先（買い手企業）ごとの固定価格 ----------
+  function renderClientSelect() {
+    var opts = ['<option value="">— 選択なし —</option>'];
+    state.clients.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'ja'); }).forEach(function (c) {
+      opts.push('<option value="' + c.id + '"' + (c.id === state.selectedClientId ? ' selected' : '') + '>' + esc(c.name) + '</option>');
+    });
+    clientSelect.innerHTML = opts.join('');
+  }
+
+  function renderClientHint() {
+    if (!state.selectedClientId) {
+      clientHint.textContent = '取引先を選ぶと、その取引先向けに固定している商品は自動でその価格になります。';
+      clientHint.classList.remove('active');
+      return;
+    }
+    var c = currentClient();
+    if (!c) {
+      clientHint.textContent = '';
+      clientHint.classList.remove('active');
+      return;
+    }
+    clientHint.textContent = '現在「' + c.name + '」向けに作成中です。固定している商品は自動でその価格になります。';
+    clientHint.classList.add('active');
+  }
+
+  function renderClientManageList() {
+    if (!clientManageArea) return;
+    if (!state.clientsLoaded) { clientManageArea.innerHTML = ''; return; }
+    if (state.clients.length === 0) { clientManageArea.innerHTML = ''; return; }
+    var rows = state.clients.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'ja'); }).map(function (c) {
+      var confirming = state.confirmingClientId === c.id;
+      if (confirming) {
+        return '<div class="client-manage-row" data-id="' + c.id + '"><span>「' + esc(c.name) + '」を削除しますか？（登録した固定価格も削除されます）</span>' +
+          '<span><button class="client-del client-del-yes">削除</button> <button class="client-del client-del-no">キャンセル</button></span></div>';
+      }
+      return '<div class="client-manage-row" data-id="' + c.id + '"><span>' + esc(c.name) + '</span><button class="client-del">削除</button></div>';
+    }).join('');
+    clientManageArea.innerHTML = '<div class="client-manage-list">' + rows + '</div>';
+    clientManageArea.querySelectorAll('.client-del:not(.client-del-yes):not(.client-del-no)').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.confirmingClientId = btn.closest('.client-manage-row').getAttribute('data-id');
+        renderClientManageList();
+      });
+    });
+    clientManageArea.querySelectorAll('.client-del-no').forEach(function (btn) {
+      btn.addEventListener('click', function () { state.confirmingClientId = null; renderClientManageList(); });
+    });
+    clientManageArea.querySelectorAll('.client-del-yes').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.closest('.client-manage-row').getAttribute('data-id');
+        state.confirmingClientId = null;
+        if (!state.db) return;
+        if (state.selectedClientId === id) { state.selectedClientId = null; saveSelectedClientId(null); }
+        state.db.collection('clients').doc(id).delete().catch(function () { showSyncNote('削除に失敗しました', true); });
+        // その取引先に紐づく固定価格もあわせて削除する。
+        state.clientPrices.filter(function (cp) { return cp.clientId === id; }).forEach(function (cp) {
+          state.db.collection('clientPrices').doc(cp.id).delete().catch(function () {});
+        });
+      });
+    });
+  }
+
+  clientSelect.addEventListener('change', function () {
+    state.selectedClientId = clientSelect.value || null;
+    saveSelectedClientId(state.selectedClientId);
+    renderClientHint();
+    renderTemplates();
+    updatePreview();
+  });
+
+  clientAddBtn.addEventListener('click', function () {
+    var name = clientNameInput.value.trim();
+    if (!name) { clientNameInput.focus(); return; }
+    if (!state.db) { showSyncNote('同期の準備中です。少し待ってからお試しください', true); return; }
+    var id = slugify(name);
+    clientAddBtn.disabled = true;
+    state.db.collection('clients').doc(id).set({ name: name, createdAt: new Date().toISOString() })
+      .then(function () {
+        state.selectedClientId = id;
+        saveSelectedClientId(id);
+        clientNameInput.value = '';
+        renderClientSelect();
+        renderClientHint();
+        renderTemplates();
+        updatePreview();
+      })
+      .catch(function () { showSyncNote('取引先の登録に失敗しました', true); })
+      .then(function () { clientAddBtn.disabled = false; });
+  });
+  clientNameInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); clientAddBtn.click(); }
+  });
 
   inRound.addEventListener('input', function () { addFormTouched = true; updatePreview(); });
   inBase.addEventListener('input', updatePreview);
@@ -1640,6 +1862,14 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   });
 
   function updatePreview() {
+    // 取引先ごとの固定価格は、商品自体のグローバルな固定価格より優先される。
+    var clientOverride = currentMatchedTemplate && state.selectedClientId
+      ? findClientPrice(state.selectedClientId, currentMatchedTemplate.id) : null;
+    if (clientOverride) {
+      previewValue.textContent = fmtYen(clientOverride.fixedProposalPriceJPY);
+      renderPrevPriceInfo();
+      return;
+    }
     // A 固定 product's preview always shows its fixed 計算後の価格 as-is,
     // not a margin/fx recalculation from whatever's currently in 相場.
     if (currentMatchedTemplate && currentMatchedTemplate.priceFixed && currentMatchedTemplate.fixedProposalPriceJPY != null) {
@@ -1657,6 +1887,14 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   // field, and a "前回 ¥…" line under the preview with a colored ↑/↓ arrow
   // comparing today's proposal against what was proposed last time.
   function renderPrevPriceInfo() {
+    var clientOverride = currentMatchedTemplate && state.selectedClientId
+      ? findClientPrice(state.selectedClientId, currentMatchedTemplate.id) : null;
+    if (clientOverride) {
+      var c = currentClient();
+      prevBaseHint.textContent = (c ? c.name : 'この取引先') + '向けの固定価格です（相場・計算後の価格は変更されません）';
+      prevProposalValue.innerHTML = '';
+      return;
+    }
     if (currentMatchedTemplate && currentMatchedTemplate.priceFixed) {
       prevBaseHint.textContent = '固定価格の商品です（相場・計算後の価格は変更されません）';
       prevProposalValue.innerHTML = '';
@@ -1942,6 +2180,16 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         : computeProposal(base, margin, fx, round);
     }
 
+    // 取引先ごとの固定価格は、商品自体のグローバルな固定価格よりさらに優先される
+    // ——忘れて相場のまま送ってしまう事故を防ぐのがこの機能の目的なので、名前が
+    // 一致している限りは自動で適用する。
+    var clientOverride = currentMatchedTemplate && state.selectedClientId
+      ? findClientPrice(state.selectedClientId, currentMatchedTemplate.id) : null;
+    var isClientFixedAdd = clientOverride && currentMatchedTemplate.englishName.toLowerCase() === name.toLowerCase();
+    if (isClientFixedAdd) {
+      proposal = clientOverride.fixedProposalPriceJPY;
+    }
+
     var data = {
       englishName: name,
       basePriceJPY: base,
@@ -1954,6 +2202,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       isExample: false,
       createdAt: new Date().toISOString()
     };
+    if (isClientFixedAdd) {
+      data.clientId = state.selectedClientId;
+      data.clientName = (currentClient() || {}).name || '';
+    }
 
     if (state.db) {
       addBtn.disabled = true;
@@ -2053,8 +2305,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       tmplList.innerHTML = '<div class="tmpl-empty">「' + esc(term) + '」に一致する商品が見つかりませんでした。</div>';
       return;
     }
+    var selClient = currentClient();
     tmplList.innerHTML = visibleTemplates.map(function (t) {
       var confirming = state.confirmingTemplateId === t.id;
+      var cp = selClient ? findClientPrice(selClient.id, t.id) : null;
       return (
         '<div class="tmpl-row" data-id="' + t.id + '">' +
           '<div class="tmpl-row-top">' +
@@ -2071,6 +2325,16 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
               '<div class="tmpl-field"><label>固定する計算後の価格 (JPY)</label><input type="number" class="tmpl-fixed-proposal mono" value="' + (t.fixedProposalPriceJPY != null ? t.fixedProposalPriceJPY : '') + '" step="1" inputmode="numeric"></div>' +
             '</div>'
           : '') +
+          (selClient ?
+            '<div class="tmpl-client-fixed">' +
+              '<label class="tmpl-fixed-toggle"><input type="checkbox" class="tmpl-client-fixed-check"' + (cp ? ' checked' : '') + '> ' + esc(selClient.name) + '向けに価格を固定する</label>' +
+              (cp ?
+                '<div class="tmpl-fixed-fields">' +
+                  '<div class="tmpl-field"><label>' + esc(selClient.name) + '向けの価格 (JPY)</label><input type="number" class="tmpl-client-fixed-price mono" value="' + (cp.fixedProposalPriceJPY != null ? cp.fixedProposalPriceJPY : '') + '" step="1" inputmode="numeric"></div>' +
+                '</div>'
+              : '') +
+            '</div>'
+          : '') +
           (confirming ?
             '<div class="confirm-row"><span>この商品の登録を削除しますか？（商品リストには影響しません）</span><div class="btns">' +
               '<button class="btn-danger tmpl-del-yes">削除する</button>' +
@@ -2080,6 +2344,41 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         '</div>'
       );
     }).join('');
+    tmplList.querySelectorAll('.tmpl-client-fixed-check').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var id = cb.closest('.tmpl-row').getAttribute('data-id');
+        if (!state.db || !selClient) { cb.checked = !cb.checked; return; }
+        var docId = clientPriceDocId(selClient.id, id);
+        if (cb.checked) {
+          var t = state.templates.filter(function (x) { return x.id === id; })[0];
+          var seedPrice = t ? computeProposal(t.basePriceJPY, t.marginPercent, t.fxRate, t.roundTo100) : 0;
+          state.db.collection('clientPrices').doc(docId).set({
+            clientId: selClient.id,
+            templateId: id,
+            fixedProposalPriceJPY: seedPrice,
+            updatedAt: new Date().toISOString()
+          }).catch(function () { showSyncNote('保存に失敗しました', true); });
+        } else {
+          state.db.collection('clientPrices').doc(docId).delete()
+            .catch(function () { showSyncNote('削除に失敗しました', true); });
+        }
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-client-fixed-price').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var id = inp.closest('.tmpl-row').getAttribute('data-id');
+        var val = parseFloat(inp.value);
+        if (!isFinite(val) || val < 0) return;
+        if (!state.db || !selClient) return;
+        var docId = clientPriceDocId(selClient.id, id);
+        state.db.collection('clientPrices').doc(docId).set({
+          clientId: selClient.id,
+          templateId: id,
+          fixedProposalPriceJPY: val,
+          updatedAt: new Date().toISOString()
+        }).catch(function () { showSyncNote('保存に失敗しました', true); });
+      });
+    });
     tmplList.querySelectorAll('.tmpl-fixed-check').forEach(function (cb) {
       cb.addEventListener('change', function () {
         var id = cb.closest('.tmpl-row').getAttribute('data-id');
@@ -3019,7 +3318,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       '<div class="item-card" data-id="' + item.id + '">' +
         '<div class="row-top">' +
           '<div>' +
-            '<span class="name">' + esc(item.englishName) + (item.isExample ? '<span class="example-badge">例</span>' : '') + '</span>' +
+            '<span class="name">' + esc(item.englishName) + (item.isExample ? '<span class="example-badge">例</span>' : '') +
+              (item.clientName ? '<span class="client-badge">' + esc(item.clientName) + '固定</span>' : '') + '</span>' +
             '<div class="note">JAN: ' + (item.janCode ? esc(item.janCode) : '&mdash;') + ' &nbsp;/&nbsp; 数量: ' + (item.quantity || 1) + '</div>' +
           '</div>' +
           '<div class="readout">' +
@@ -3309,7 +3609,9 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             fxRate: typeof data.fxRate === 'number' ? data.fxRate : 1,
             roundTo100: !!data.roundTo100,
             proposalPriceJPY: data.proposalPriceJPY || 0,
-            isExample: !!data.isExample
+            isExample: !!data.isExample,
+            clientId: data.clientId || '',
+            clientName: data.clientName || ''
           };
         });
         state.itemsLoaded = true;
@@ -3349,6 +3651,37 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         renderTemplates();
       });
 
+      db.collection('clients').orderBy('name', 'asc').limit(300).onSnapshot(function (qs) {
+        state.clients = qs.docs.map(function (d) {
+          var data = d.data() || {};
+          return { id: d.id, name: data.name || '', createdAt: data.createdAt || '' };
+        });
+        state.clientsLoaded = true;
+        renderClientSelect();
+        renderClientHint();
+        renderClientManageList();
+        renderTemplates();
+      }, function () {
+        state.clientsLoaded = true;
+        renderClientSelect();
+      });
+
+      db.collection('clientPrices').orderBy('updatedAt', 'desc').limit(1000).onSnapshot(function (qs) {
+        state.clientPrices = qs.docs.map(function (d) {
+          var data = d.data() || {};
+          return {
+            id: d.id,
+            clientId: data.clientId || '',
+            templateId: data.templateId || '',
+            fixedProposalPriceJPY: typeof data.fixedProposalPriceJPY === 'number' ? data.fixedProposalPriceJPY : null,
+            updatedAt: data.updatedAt || ''
+          };
+        });
+        state.clientPricesLoaded = true;
+        renderTemplates();
+        updatePreview();
+      }, function () { state.clientPricesLoaded = true; });
+
       // Shared, cross-device copy of the last loaded 買取スキャナーCSV's
       // camera/lens price+name index (see saveScannerIndexToFirebase) — so
       // once CSV is loaded on any one device, every device shows the same
@@ -3370,6 +3703,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   applySettingsToForm();
   renderList();
   renderTemplates();
+  renderClientSelect();
+  renderClientHint();
   boot();
 })();
 </script>
