@@ -187,6 +187,44 @@
   .refresh-btn.is-refreshing { animation: refresh-spin 0.8s linear infinite; }
   @keyframes refresh-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+  /* 商品名の表示言語（英語 / 日本語）切り替えスイッチ。実際のデータ（請求書等
+     で使う英語名）はどちらを選んでも変わらない——画面上の見え方だけが変わる。
+     ヘッダーの横幅を圧迫しないよう、ヘッダーの下に独立した細い帯として置く。 */
+  .lang-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 2px 0 14px;
+  }
+  .lang-bar-label {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .lang-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .lang-toggle-btn {
+    font: inherit;
+    font-size: 11px;
+    padding: 6px 10px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .lang-toggle-btn + .lang-toggle-btn { border-left: 1px solid var(--border); }
+  .lang-toggle-btn.active {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-weight: 600;
+  }
+
   /* ---------- pull-to-refresh (mobile) ---------- */
   .pull-refresh-indicator {
     position: fixed;
@@ -637,6 +675,7 @@
     flex: 1 1 110px;
     min-width: 100px;
   }
+  .tmpl-field.wide { flex-basis: 100%; }
   .tmpl-field label {
     font-size: 10px;
     color: var(--text-muted);
@@ -1185,6 +1224,14 @@
     </div>
   </header>
 
+  <div class="lang-bar">
+    <span class="lang-bar-label">商品名の表示</span>
+    <div class="lang-toggle" id="langToggle">
+      <button type="button" class="lang-toggle-btn" data-lang="en">English</button>
+      <button type="button" class="lang-toggle-btn" data-lang="ja">日本語</button>
+    </div>
+  </div>
+
   <main>
     <button type="button" id="csvStaleWarning" class="stale-warning" hidden>
       <span class="stale-warning-icon">⚠️</span>
@@ -1259,6 +1306,10 @@
             </div>
             <input type="text" id="inName" placeholder="e.g. Canon EOS R5 Body" autocomplete="off">
             <div class="name-suggest" id="nameSuggest"></div>
+          </div>
+          <div class="field full">
+            <label for="inNameJa">商品名（日本語・任意）</label>
+            <input type="text" id="inNameJa" placeholder="例：キヤノン EOS R5 ボディ" autocomplete="off">
           </div>
           <div class="field">
             <label for="inBase">相場 (JPY)</label>
@@ -1381,7 +1432,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     clientPrices: [],
     clientPricesLoaded: false,
     selectedClientId: null,
-    confirmingClientId: null
+    confirmingClientId: null,
+    // 商品名の表示言語（'en' | 'ja'）。データ自体（englishName）は常に請求書用の
+    // 英語名のまま——これは画面上の見え方だけを切り替える設定。
+    nameDisplayLang: 'en'
   };
 
   var CLIENT_SELECT_STORAGE_KEY = 'exportPricer.selectedClientId';
@@ -1395,6 +1449,27 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     } catch (e) {}
   }
   state.selectedClientId = loadSelectedClientId();
+
+  var NAME_LANG_STORAGE_KEY = 'exportPricer.nameDisplayLang';
+  function loadNameDisplayLang() {
+    try {
+      var v = localStorage.getItem(NAME_LANG_STORAGE_KEY);
+      return (v === 'ja') ? 'ja' : 'en';
+    } catch (e) { return 'en'; }
+  }
+  function saveNameDisplayLang(lang) {
+    try { localStorage.setItem(NAME_LANG_STORAGE_KEY, lang); } catch (e) {}
+  }
+  state.nameDisplayLang = loadNameDisplayLang();
+
+  // 商品名の画面表示用のヘルパー。データとしては常に englishName が正（請求書・
+  // パッキングリストや商品の照合はすべて英語名基準のまま）——表示言語が「日本語」
+  // で、かつ japaneseName が登録されている場合だけそちらを見せる。
+  function displayName(obj) {
+    if (!obj) return '';
+    if (state.nameDisplayLang === 'ja' && obj.japaneseName) return obj.japaneseName;
+    return obj.englishName || '';
+  }
 
   function clientPriceDocId(clientId, templateId) { return clientId + '__' + templateId; }
 
@@ -1600,8 +1675,33 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     el.addEventListener('change', scheduleSettingsSave);
   });
 
+  // ---------- 商品名の表示言語切り替え ----------
+  var langToggle = document.getElementById('langToggle');
+  function renderLangToggle() {
+    if (!langToggle) return;
+    langToggle.querySelectorAll('.lang-toggle-btn').forEach(function (btn) {
+      var active = btn.getAttribute('data-lang') === state.nameDisplayLang;
+      btn.classList.toggle('active', active);
+    });
+  }
+  if (langToggle) {
+    langToggle.addEventListener('click', function (e) {
+      var btn = e.target.closest('.lang-toggle-btn');
+      if (!btn) return;
+      var lang = btn.getAttribute('data-lang');
+      if (lang === state.nameDisplayLang) return;
+      state.nameDisplayLang = lang;
+      saveNameDisplayLang(lang);
+      renderLangToggle();
+      renderTemplates();
+      renderList();
+      if (nameSuggest.classList.contains('open')) renderNameSuggestions(inName.value);
+    });
+  }
+
   // ---------- add form ----------
   var inName = document.getElementById('inName');
+  var inNameJa = document.getElementById('inNameJa');
   var inBase = document.getElementById('inBase');
   var inQty = document.getElementById('inQty');
   var inJan = document.getElementById('inJan');
@@ -1731,6 +1831,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       inBase.value = '';
       inQty.value = 1;
       inJan.value = '';
+      inNameJa.value = '';
       currentMatchedTemplate = null;
       updatePreview();
       renderScannerPriceBox();
@@ -1742,6 +1843,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     if (match) {
       if (!inBase.value) inBase.value = match.basePriceJPY;
       if (!inJan.value && match.janCode) inJan.value = match.janCode;
+      if (!inNameJa.value && match.japaneseName) inNameJa.value = match.japaneseName;
       updatePreview();
       renderScannerPriceBox();
       renderJanNameBox();
@@ -1781,8 +1883,11 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     if (!typed || !state.templates.length) { hideNameSuggestions(); return; }
     var typedLower = typed.toLowerCase();
     var typedNorm = normalizeForMatch(typed);
+    // 英語名・日本語名どちらでも検索できる（表示言語の設定とは関係なく、
+    // どちらで入力しても登録済みの商品を見つけられるようにする）。
     var matches = state.templates.filter(function (t) {
-      return normalizeForMatch(t.englishName).indexOf(typedNorm) !== -1;
+      return normalizeForMatch(t.englishName).indexOf(typedNorm) !== -1 ||
+        normalizeForMatch(t.japaneseName || '').indexOf(typedNorm) !== -1;
     });
     // Exact match already filled the form silently — no need to show a
     // single suggestion identical to what's already typed.
@@ -1800,12 +1905,15 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     matches = matches.slice(0, 8);
     nameSuggestActiveIdx = -1;
     nameSuggest.innerHTML = matches.map(function (t) {
+      // 表示言語の設定に合わせた見出し（日本語名が未登録ならそのまま英語名）。
+      var label = displayName(t) || t.englishName;
       // Highlighting only makes sense when the typed text appears literally
-      // (same spacing/punctuation) in the name — for a normalized match
-      // (typed without spaces/-//) the name is shown plain, rather than
-      // mis-highlighting an unrelated stretch of characters.
+      // (same spacing/punctuation) in the shown label — for a normalized
+      // match (typed without spaces/-//, or matched via the other language)
+      // the name is shown plain, rather than mis-highlighting an unrelated
+      // stretch of characters.
       var re = new RegExp('(' + escRegExp(typed) + ')', 'ig');
-      var highlighted = re.test(t.englishName) ? esc(t.englishName).replace(new RegExp('(' + escRegExp(typed) + ')', 'ig'), '<mark>$1</mark>') : esc(t.englishName);
+      var highlighted = re.test(label) ? esc(label).replace(new RegExp('(' + escRegExp(typed) + ')', 'ig'), '<mark>$1</mark>') : esc(label);
       return '<button type="button" class="name-suggest-item" data-name="' + esc(t.englishName) + '">' + highlighted + '</button>';
     }).join('');
     nameSuggest.classList.add('open');
@@ -2169,6 +2277,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var qty = parseInt(inQty.value, 10);
     if (!isFinite(qty) || qty <= 0) qty = 1;
     var jan = inJan.value.trim();
+    var nameJa = inNameJa.value.trim();
     var margin = state.settings.marginPercent;
     var fx = state.settings.fxRate;
     var round = inRound.checked;
@@ -2198,6 +2307,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
 
     var data = {
       englishName: name,
+      japaneseName: nameJa,
       basePriceJPY: base,
       quantity: qty,
       janCode: jan,
@@ -2218,13 +2328,14 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       state.db.collection('items').add(data)
         .catch(function () { showSyncNote('追加に失敗しました。もう一度お試しください', true); })
         .then(function () { addBtn.disabled = false; });
-      upsertTemplate(name, base, margin, fx, round, jan);
+      upsertTemplate(name, base, margin, fx, round, jan, nameJa);
     } else {
       showSyncNote('同期の準備中です。少し待ってから追加してください', true);
       return;
     }
 
     inName.value = '';
+    inNameJa.value = '';
     inBase.value = '';
     inQty.value = '1';
     inJan.value = '';
@@ -2249,7 +2360,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
 
   // Reads the existing template (if any) so an auto-registration from the
   // add form / bulk add never wipes out a JAN code entered separately.
-  function upsertTemplate(name, basePriceJPY, marginPercent, fxRate, roundTo100, janCode) {
+  function upsertTemplate(name, basePriceJPY, marginPercent, fxRate, roundTo100, janCode, japaneseName) {
     if (!state.db || !name) return Promise.resolve();
     var id = slugify(name);
     var ref = state.db.collection('templates').doc(id);
@@ -2263,10 +2374,14 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         updatedAt: new Date().toISOString()
       };
       if (janCode) payload.janCode = janCode;
+      // 空欄で再登録しても既存の日本語名を消してしまわないよう、JANコードと
+      // 同じ扱いにする（入力があった時だけ上書きする）。
+      if (japaneseName) payload.japaneseName = japaneseName;
       if (snap.exists) {
         return ref.update(payload).catch(function () {});
       }
       if (!payload.janCode) payload.janCode = '';
+      if (!payload.japaneseName) payload.japaneseName = '';
       return ref.set(payload).catch(function () {});
     }).catch(function () {});
   }
@@ -2305,7 +2420,9 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var term = tmplSearchTerm.trim();
     var termNorm = normalizeForMatch(term);
     var visibleTemplates = !term ? state.templates : state.templates.filter(function (t) {
-      return normalizeForMatch(t.englishName).indexOf(termNorm) !== -1 || (t.janCode || '').indexOf(term) !== -1;
+      return normalizeForMatch(t.englishName).indexOf(termNorm) !== -1 ||
+        normalizeForMatch(t.japaneseName || '').indexOf(termNorm) !== -1 ||
+        (t.janCode || '').indexOf(term) !== -1;
     });
     if (visibleTemplates.length === 0) {
       tmplList.innerHTML = '<div class="tmpl-empty">「' + esc(term) + '」に一致する商品が見つかりませんでした。</div>';
@@ -2318,11 +2435,12 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       return (
         '<div class="tmpl-row" data-id="' + t.id + '">' +
           '<div class="tmpl-row-top">' +
-            '<span class="tmpl-name">' + esc(t.englishName) + '</span>' +
+            '<span class="tmpl-name">' + esc(displayName(t) || t.englishName) + '</span>' +
             (confirming ? '' : '<button class="tmpl-del">削除</button>') +
           '</div>' +
           '<div class="tmpl-row-fields">' +
             '<div class="tmpl-field"><label>JANコード</label><div class="tmpl-jan-display mono">' + (t.janCode ? esc(t.janCode) : '&mdash;') + '</div></div>' +
+            '<div class="tmpl-field wide"><label>商品名（日本語・任意）</label><input type="text" class="tmpl-ja-name" value="' + esc(t.japaneseName || '') + '" placeholder="例：キヤノン EOS R5 ボディ"></div>' +
           '</div>' +
           '<label class="tmpl-fixed-toggle"><input type="checkbox" class="tmpl-fixed-check"' + (t.priceFixed ? ' checked' : '') + '> 価格を固定する（CSVでの相場更新の対象外）</label>' +
           (t.priceFixed ?
@@ -2383,6 +2501,15 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           fixedProposalPriceJPY: val,
           updatedAt: new Date().toISOString()
         }).catch(function () { showSyncNote('保存に失敗しました', true); });
+      });
+    });
+    tmplList.querySelectorAll('.tmpl-ja-name').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var id = inp.closest('.tmpl-row').getAttribute('data-id');
+        if (!state.db) return;
+        var val = inp.value.trim();
+        state.db.collection('templates').doc(id).update({ japaneseName: val, updatedAt: new Date().toISOString() })
+          .catch(function () { showSyncNote('保存に失敗しました', true); });
       });
     });
     tmplList.querySelectorAll('.tmpl-fixed-check').forEach(function (cb) {
@@ -3305,6 +3432,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         '<div class="item-card" data-id="' + item.id + '">' +
           '<div class="edit-grid">' +
             '<div class="field full"><label>商品名（英語）</label><input type="text" class="e-name" value="' + esc(item.englishName) + '"></div>' +
+            '<div class="field full"><label>商品名（日本語・任意）</label><input type="text" class="e-name-ja" value="' + esc(item.japaneseName || '') + '"></div>' +
             '<div class="field full"><label>提示する価格 (JPY)　<span class="field-hint-inline">相手企業に提示する最終的な価格。直接変更できます</span></label><input type="number" class="e-proposal mono" value="' + item.proposalPriceJPY + '"></div>' +
             '<div class="field"><label>相場 (JPY)</label><input type="number" class="e-base" value="' + item.basePriceJPY + '"></div>' +
             '<div class="field"><label>数量</label><input type="number" min="1" step="1" class="e-qty" value="' + (item.quantity || 1) + '"></div>' +
@@ -3326,7 +3454,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       '<div class="item-card" data-id="' + item.id + '">' +
         '<div class="row-top">' +
           '<div>' +
-            '<span class="name">' + esc(item.englishName) + (item.isExample ? '<span class="example-badge">例</span>' : '') +
+            '<span class="name">' + esc(displayName(item) || item.englishName) + (item.isExample ? '<span class="example-badge">例</span>' : '') +
               (item.clientName ? '<span class="client-badge">' + esc(item.clientName) + '固定</span>' : '') + '</span>' +
             '<div class="note">JAN: ' + (item.janCode ? esc(item.janCode) : '&mdash;') + ' &nbsp;/&nbsp; 数量: ' + (item.quantity || 1) + '</div>' +
           '</div>' +
@@ -3401,6 +3529,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         var card = btn.closest('.item-card');
         var id = card.getAttribute('data-id');
         var name = card.querySelector('.e-name').value.trim();
+        var nameJa = card.querySelector('.e-name-ja').value.trim();
         var base = parseFloat(card.querySelector('.e-base').value);
         var qty = parseInt(card.querySelector('.e-qty').value, 10);
         var jan = card.querySelector('.e-jan').value.trim();
@@ -3421,6 +3550,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         if (state.db) {
           state.db.collection('items').doc(id).update({
             englishName: name,
+            japaneseName: nameJa,
             basePriceJPY: base,
             quantity: qty,
             janCode: jan,
@@ -3430,7 +3560,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             proposalPriceJPY: proposal,
             updatedAt: new Date().toISOString()
           }).catch(function () { showSyncNote('保存に失敗しました', true); });
-          upsertTemplate(name, base, margin, fx, round, jan);
+          upsertTemplate(name, base, margin, fx, round, jan, nameJa);
         }
         state.editingId = null;
       });
@@ -3629,6 +3759,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           return {
             id: d.id,
             englishName: data.englishName || '',
+            japaneseName: data.japaneseName || '',
             basePriceJPY: data.basePriceJPY || 0,
             quantity: typeof data.quantity === 'number' && data.quantity > 0 ? data.quantity : 1,
             janCode: data.janCode || '',
@@ -3655,6 +3786,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           return {
             id: d.id,
             englishName: data.englishName || '',
+            japaneseName: data.japaneseName || '',
             basePriceJPY: data.basePriceJPY || 0,
             janCode: data.janCode || '',
             // Kept so the add-form can show what was actually proposed last
@@ -3732,6 +3864,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   renderTemplates();
   renderClientSelect();
   renderClientHint();
+  renderLangToggle();
   boot();
 })();
 </script>
