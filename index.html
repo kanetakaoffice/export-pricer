@@ -3758,6 +3758,39 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     });
   }
 
+  // 画面の端（上端・下端付近）で指を止めたままでも、スクロールし続けて
+  // さらに上・下へ並び替えられるようにする（次のpointermoveイベントを
+  // 待たず、requestAnimationFrameで毎フレーム判定する）。
+  var DRAG_SCROLL_MARGIN = 80;
+  var DRAG_SCROLL_MAX_SPEED = 20;
+
+  function findDragScrollContainer() {
+    var el = itemList.parentElement;
+    while (el && el !== document.body && el !== document.documentElement) {
+      var style = window.getComputedStyle(el);
+      if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight + 1) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return document.scrollingElement || document.documentElement;
+  }
+
+  function isWindowScrollContainer(container) {
+    return container === document.scrollingElement || container === document.documentElement || container === document.body;
+  }
+
+  function scrollContainerBy(container, delta) {
+    if (isWindowScrollContainer(container)) {
+      var before = (document.scrollingElement || document.documentElement).scrollTop;
+      window.scrollBy(0, delta);
+      return (document.scrollingElement || document.documentElement).scrollTop !== before;
+    }
+    var beforeTop = container.scrollTop;
+    container.scrollTop += delta;
+    return container.scrollTop !== beforeTop;
+  }
+
   function startDrag(id, card, startClientY, pointerId) {
     if (dragCtx) return;
     var cardRect = card.getBoundingClientRect();
@@ -3780,31 +3813,49 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       placeholder: placeholder,
       pointerId: pointerId,
       offsetY: startClientY - cardRect.top,
-      cardHeight: cardRect.height
+      cardHeight: cardRect.height,
+      lastClientY: startClientY,
+      scrollContainer: findDragScrollContainer(),
+      rafId: null
     };
     state.dragInProgress = true;
 
     document.addEventListener('pointermove', onDragMove);
     document.addEventListener('pointerup', onDragEnd);
     document.addEventListener('pointercancel', onDragCancel);
+
+    dragCtx.rafId = requestAnimationFrame(dragTick);
   }
 
-  function autoScrollIfNeeded(clientY) {
-    var margin = 60, maxSpeed = 16;
-    if (clientY < margin) {
-      window.scrollBy(0, -Math.ceil((margin - clientY) / margin * maxSpeed));
-    } else if (window.innerHeight - clientY < margin) {
-      window.scrollBy(0, Math.ceil((margin - (window.innerHeight - clientY)) / margin * maxSpeed));
+  // 毎フレーム呼ばれ続けるループ：指が画面端の余白内にある間は、指が
+  // 止まっていてもスクロールを継続する。
+  function dragTick() {
+    if (!dragCtx) return;
+    var clientY = dragCtx.lastClientY;
+    var delta = 0;
+    if (clientY < DRAG_SCROLL_MARGIN) {
+      delta = -Math.ceil((DRAG_SCROLL_MARGIN - clientY) / DRAG_SCROLL_MARGIN * DRAG_SCROLL_MAX_SPEED);
+    } else if (window.innerHeight - clientY < DRAG_SCROLL_MARGIN) {
+      delta = Math.ceil((DRAG_SCROLL_MARGIN - (window.innerHeight - clientY)) / DRAG_SCROLL_MARGIN * DRAG_SCROLL_MAX_SPEED);
     }
+    if (delta !== 0) {
+      scrollContainerBy(dragCtx.scrollContainer, delta);
+      // position:fixedのカードは画面上は指と同じ位置のままでよいが、
+      // スクロールで他のカードの画面上の位置が変わるので、並び替え判定は
+      // 毎回更新する。
+      updateDragFrame();
+    }
+    dragCtx.rafId = requestAnimationFrame(dragTick);
   }
 
-  function onDragMove(e) {
-    if (!dragCtx || e.pointerId !== dragCtx.pointerId) return;
-    if (e.cancelable) e.preventDefault();
-    var newTop = e.clientY - dragCtx.offsetY;
+  function updateDragFrame() {
+    if (!dragCtx) return;
+    var newTop = dragCtx.lastClientY - dragCtx.offsetY;
     dragCtx.card.style.top = newTop + 'px';
-    autoScrollIfNeeded(e.clientY);
+    reorderPlaceholder(newTop);
+  }
 
+  function reorderPlaceholder(newTop) {
     var cardMidY = newTop + dragCtx.cardHeight / 2;
     var siblings = Array.prototype.filter.call(itemList.children, function (el) {
       return el.classList && el.classList.contains('item-card') && el !== dragCtx.card;
@@ -3843,6 +3894,13 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     });
   }
 
+  function onDragMove(e) {
+    if (!dragCtx || e.pointerId !== dragCtx.pointerId) return;
+    if (e.cancelable) e.preventDefault();
+    dragCtx.lastClientY = e.clientY;
+    updateDragFrame();
+  }
+
   function onDragEnd(e) {
     if (!dragCtx || e.pointerId !== dragCtx.pointerId) return;
     finishDrag(true);
@@ -3857,6 +3915,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var ctx = dragCtx;
     dragCtx = null;
     state.dragInProgress = false;
+    if (ctx.rafId) cancelAnimationFrame(ctx.rafId);
     document.removeEventListener('pointermove', onDragMove);
     document.removeEventListener('pointerup', onDragEnd);
     document.removeEventListener('pointercancel', onDragCancel);
