@@ -3815,13 +3815,32 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       var mid = r.top + r.height / 2;
       if (cardMidY < mid) { insertBeforeEl = siblings[i]; break; }
     }
+    var willMove = insertBeforeEl
+      ? dragCtx.placeholder.nextElementSibling !== insertBeforeEl
+      : !!dragCtx.placeholder.nextElementSibling;
+    if (!willMove) return;
+
+    // 他のカードがつかんでいるカードに場所を譲る時、瞬間移動ではなく
+    // スーッと滑るように動かす（FLIP：移動前の位置を記録→実際に並べ替え→
+    // 移動後の位置との差分ぶん逆方向にずらしておいて→トランジションで
+    // 0に戻すことで、結果的に滑らかなスライドに見える）。
+    var firstTops = siblings.map(function (el) { return { el: el, top: el.getBoundingClientRect().top }; });
+
     if (insertBeforeEl) {
-      if (dragCtx.placeholder.nextElementSibling !== insertBeforeEl) {
-        itemList.insertBefore(dragCtx.placeholder, insertBeforeEl);
-      }
-    } else if (dragCtx.placeholder.nextElementSibling) {
+      itemList.insertBefore(dragCtx.placeholder, insertBeforeEl);
+    } else {
       itemList.appendChild(dragCtx.placeholder);
     }
+
+    firstTops.forEach(function (ft) {
+      var delta = ft.top - ft.el.getBoundingClientRect().top;
+      if (Math.abs(delta) < 0.5) return;
+      ft.el.style.transition = 'none';
+      ft.el.style.transform = 'translateY(' + delta + 'px)';
+      ft.el.getBoundingClientRect(); // 強制リフロー（ここまでを即座に反映させる）
+      ft.el.style.transition = 'transform 180ms ease';
+      ft.el.style.transform = '';
+    });
   }
 
   function onDragEnd(e) {
