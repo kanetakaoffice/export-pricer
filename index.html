@@ -1066,9 +1066,39 @@
   }
   .item-card .row-top {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
+  }
+  .item-card .row-top-main { flex: 1; min-width: 0; }
+  .item-card .drag-handle {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1;
+    cursor: grab;
+    touch-action: none;
+    padding: 0;
+    border-radius: 6px;
+    -webkit-user-select: none;
+    user-select: none;
+    margin-top: -2px;
+  }
+  .item-card .drag-handle:active { cursor: grabbing; background: var(--border-soft); }
+  .item-card.dragging {
+    opacity: 0.92;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+  }
+  .item-card-placeholder {
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-md);
+    background: var(--accent-soft);
   }
   .item-card .name {
     font-weight: 600;
@@ -1436,7 +1466,11 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     confirmingClientId: null,
     // 商品名の表示言語（'en' | 'ja'）。データ自体（englishName）は常に請求書用の
     // 英語名のまま——これは画面上の見え方だけを切り替える設定。
-    nameDisplayLang: 'en'
+    nameDisplayLang: 'en',
+    // 長押しドラッグで並び替え中は、Firebaseからの再同期で一覧の再描画が走って
+    // ドラッグ中のDOM操作を壊してしまわないよう、この間だけrenderList()を
+    // スキップする。
+    dragInProgress: false
   };
 
   var CLIENT_SELECT_STORAGE_KEY = 'exportPricer.selectedClientId';
@@ -2409,7 +2443,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       roundTo100: round,
       proposalPriceJPY: proposal,
       isExample: false,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      sortIndex: Date.now()
     };
     if (isClientFixedAdd) {
       data.clientId = state.selectedClientId;
@@ -3436,7 +3471,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
 
     var tasks = [];
     var templateMap = {};
-    toAdd.forEach(function (p) {
+    var bulkAddBaseSort = Date.now();
+    toAdd.forEach(function (p, idx) {
       var proposal = computeProposal(p.price, margin, fx, round);
       tasks.push(state.db.collection('items').add({
         englishName: p.name,
@@ -3448,7 +3484,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         roundTo100: round,
         proposalPriceJPY: proposal,
         isExample: false,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        // 同じミリ秒内でまとめて登録されても並び順が安定するよう、連番で
+        // 少しずつずらしておく。
+        sortIndex: bulkAddBaseSort + idx
       }));
       templateMap[slugify(p.name)] = p;
     });
@@ -3501,6 +3540,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   }
 
   function renderList() {
+    // ドラッグで並び替え中にFirebaseの他の変更（別デバイスでの編集など）が
+    // 割り込んでここが呼ばれても、一覧を丸ごと再描画してドラッグ中のDOMを
+    // 壊してしまわないようにする。ドラッグ終了時に改めてrenderList()する。
+    if (state.dragInProgress) return;
     if (!state.itemsLoaded) {
       itemList.innerHTML = '<div class="empty-state"><span class="glyph">&#9210;</span>読み込み中…</div>';
       itemCount.textContent = '';
@@ -3546,7 +3589,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     return (
       '<div class="item-card" data-id="' + item.id + '">' +
         '<div class="row-top">' +
-          '<div>' +
+          '<button type="button" class="drag-handle" aria-label="長押しして並び替え" title="長押ししてスライドすると順番を変更できます">&#9776;</button>' +
+          '<div class="row-top-main">' +
             '<span class="name">' + esc(displayName(item) || item.englishName) + (item.isExample ? '<span class="example-badge">例</span>' : '') +
               (item.clientName ? '<span class="client-badge">' + esc(item.clientName) + '固定</span>' : '') + '</span>' +
             '<div class="note">JAN: ' + (item.janCode ? esc(item.janCode) : '&mdash;') + ' &nbsp;/&nbsp; 数量: ' + (item.quantity || 1) + '</div>' +
@@ -3620,6 +3664,9 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         card.querySelector('.e-proposal').value = computeProposal(base, margin, fx, round);
       });
     });
+    itemList.querySelectorAll('.item-card').forEach(function (card) {
+      bindDragHandle(card);
+    });
     itemList.querySelectorAll('.e-save').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var card = btn.closest('.item-card');
@@ -3661,6 +3708,185 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         state.editingId = null;
       });
     });
+  }
+
+  // ---------- 商品リストの長押しドラッグ並び替え ----------
+  // handle を長押し（約400ms、ほぼ動かさずに）してからスライドすると、
+  // つかんだカードが指に追従して浮き、他のカードの間を通過するたびに
+  // その場で順番が入れ替わる。指を離した時点のDOM上の前後関係から
+  // sortIndex（中間値）を計算してFirebaseに保存する。
+  var DRAG_LONG_PRESS_MS = 420;
+  var DRAG_MOVE_CANCEL_PX = 10;
+  var dragCtx = null; // 実際にドラッグが始まった後の状態（長押し待ち中はnull）
+
+  function bindDragHandle(card) {
+    var handle = card.querySelector('.drag-handle');
+    if (!handle) return;
+    var pressTimer = null;
+    var pressPointerId = null;
+    var pressStartX = 0;
+    var pressStartY = 0;
+
+    function clearPressTimer() {
+      if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; }
+      pressPointerId = null;
+    }
+
+    handle.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
+      if (state.editingId || state.confirmingId) return;
+      var id = card.getAttribute('data-id');
+      pressPointerId = e.pointerId;
+      pressStartX = e.clientX;
+      pressStartY = e.clientY;
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(function () {
+        pressTimer = null;
+        startDrag(id, card, e.clientY, pressPointerId);
+      }, DRAG_LONG_PRESS_MS);
+    });
+    handle.addEventListener('pointermove', function (e) {
+      if (pressTimer && e.pointerId === pressPointerId) {
+        var dx = e.clientX - pressStartX, dy = e.clientY - pressStartY;
+        if (Math.sqrt(dx * dx + dy * dy) > DRAG_MOVE_CANCEL_PX) clearPressTimer();
+      }
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (evt) {
+      handle.addEventListener(evt, function (e) {
+        if (pressTimer && e.pointerId === pressPointerId) clearPressTimer();
+      });
+    });
+  }
+
+  function startDrag(id, card, startClientY, pointerId) {
+    if (dragCtx) return;
+    var cardRect = card.getBoundingClientRect();
+    var placeholder = document.createElement('div');
+    placeholder.className = 'item-card-placeholder';
+    placeholder.style.height = cardRect.height + 'px';
+    card.parentNode.insertBefore(placeholder, card);
+
+    card.classList.add('dragging');
+    card.style.position = 'fixed';
+    card.style.left = cardRect.left + 'px';
+    card.style.top = cardRect.top + 'px';
+    card.style.width = cardRect.width + 'px';
+    card.style.zIndex = '1000';
+    try { card.setPointerCapture(pointerId); } catch (e) {}
+
+    dragCtx = {
+      id: id,
+      card: card,
+      placeholder: placeholder,
+      pointerId: pointerId,
+      offsetY: startClientY - cardRect.top,
+      cardHeight: cardRect.height
+    };
+    state.dragInProgress = true;
+
+    document.addEventListener('pointermove', onDragMove);
+    document.addEventListener('pointerup', onDragEnd);
+    document.addEventListener('pointercancel', onDragCancel);
+  }
+
+  function autoScrollIfNeeded(clientY) {
+    var margin = 60, maxSpeed = 16;
+    if (clientY < margin) {
+      window.scrollBy(0, -Math.ceil((margin - clientY) / margin * maxSpeed));
+    } else if (window.innerHeight - clientY < margin) {
+      window.scrollBy(0, Math.ceil((margin - (window.innerHeight - clientY)) / margin * maxSpeed));
+    }
+  }
+
+  function onDragMove(e) {
+    if (!dragCtx || e.pointerId !== dragCtx.pointerId) return;
+    if (e.cancelable) e.preventDefault();
+    var newTop = e.clientY - dragCtx.offsetY;
+    dragCtx.card.style.top = newTop + 'px';
+    autoScrollIfNeeded(e.clientY);
+
+    var cardMidY = newTop + dragCtx.cardHeight / 2;
+    var siblings = Array.prototype.filter.call(itemList.children, function (el) {
+      return el.classList && el.classList.contains('item-card') && el !== dragCtx.card;
+    });
+    var insertBeforeEl = null;
+    for (var i = 0; i < siblings.length; i++) {
+      var r = siblings[i].getBoundingClientRect();
+      var mid = r.top + r.height / 2;
+      if (cardMidY < mid) { insertBeforeEl = siblings[i]; break; }
+    }
+    if (insertBeforeEl) {
+      if (dragCtx.placeholder.nextElementSibling !== insertBeforeEl) {
+        itemList.insertBefore(dragCtx.placeholder, insertBeforeEl);
+      }
+    } else if (dragCtx.placeholder.nextElementSibling) {
+      itemList.appendChild(dragCtx.placeholder);
+    }
+  }
+
+  function onDragEnd(e) {
+    if (!dragCtx || e.pointerId !== dragCtx.pointerId) return;
+    finishDrag(true);
+  }
+
+  function onDragCancel(e) {
+    if (!dragCtx || e.pointerId !== dragCtx.pointerId) return;
+    finishDrag(false);
+  }
+
+  function finishDrag(commit) {
+    var ctx = dragCtx;
+    dragCtx = null;
+    state.dragInProgress = false;
+    document.removeEventListener('pointermove', onDragMove);
+    document.removeEventListener('pointerup', onDragEnd);
+    document.removeEventListener('pointercancel', onDragCancel);
+
+    var card = ctx.card;
+    var placeholder = ctx.placeholder;
+    try { card.releasePointerCapture(ctx.pointerId); } catch (e) {}
+
+    if (placeholder.parentNode) {
+      placeholder.parentNode.insertBefore(card, placeholder);
+      placeholder.parentNode.removeChild(placeholder);
+    }
+    card.classList.remove('dragging');
+    card.style.position = '';
+    card.style.left = '';
+    card.style.top = '';
+    card.style.width = '';
+    card.style.zIndex = '';
+
+    if (!commit) { renderList(); return; }
+
+    var cards = Array.prototype.filter.call(itemList.children, function (el) {
+      return el.classList && el.classList.contains('item-card');
+    });
+    var idx = cards.indexOf(card);
+    var prevCard = idx > 0 ? cards[idx - 1] : null;
+    var nextCard = idx >= 0 && idx < cards.length - 1 ? cards[idx + 1] : null;
+    var prevItem = prevCard ? state.items.find(function (it) { return it.id === prevCard.getAttribute('data-id'); }) : null;
+    var nextItem = nextCard ? state.items.find(function (it) { return it.id === nextCard.getAttribute('data-id'); }) : null;
+    var newSortIndex;
+    if (prevItem && nextItem) {
+      newSortIndex = (prevItem.sortIndex + nextItem.sortIndex) / 2;
+    } else if (prevItem) {
+      newSortIndex = prevItem.sortIndex + 1000;
+    } else if (nextItem) {
+      newSortIndex = nextItem.sortIndex - 1000;
+    } else {
+      newSortIndex = Date.now();
+    }
+
+    var draggedItem = state.items.find(function (it) { return it.id === ctx.id; });
+    if (draggedItem) draggedItem.sortIndex = newSortIndex;
+    state.items.sort(function (a, b) { return a.sortIndex - b.sortIndex; });
+    renderList();
+
+    if (state.db) {
+      state.db.collection('items').doc(ctx.id).update({ sortIndex: newSortIndex })
+        .catch(function () { showSyncNote('並び替えの保存に失敗しました', true); });
+    }
   }
 
   function performCopyList() {
@@ -3865,9 +4091,16 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             proposalPriceJPY: data.proposalPriceJPY || 0,
             isExample: !!data.isExample,
             clientId: data.clientId || '',
-            clientName: data.clientName || ''
+            clientName: data.clientName || '',
+            // 並び替え機能の追加前に登録された商品にはsortIndexが無いので、
+            // その場合は登録日時から便宜的に補う（結果的に従来通りの
+            // 登録順になる）。
+            sortIndex: typeof data.sortIndex === 'number' ? data.sortIndex : (new Date(data.createdAt).getTime() || 0)
           };
         });
+        // 表示順はDB側のorderBy('createdAt')ではなく、ドラッグ並び替えで
+        // 更新されるsortIndexを常に優先してクライアント側で並べ直す。
+        state.items.sort(function (a, b) { return a.sortIndex - b.sortIndex; });
         state.itemsLoaded = true;
         renderList();
         renderClientItemReview();
