@@ -556,6 +556,36 @@
   .scanner-box-none { font-size: 11px; color: var(--text-muted); }
 
 
+
+  /* ---------- 取引先（選択後はコンパクト表示） ---------- */
+  .client-card.compact { padding: 8px 12px; }
+  .client-compact { display: flex; align-items: center; gap: 8px; min-height: 30px; }
+  .client-compact-label { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+  .client-compact-name {
+    flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text-muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .client-compact-name.selected { color: var(--accent-strong); }
+  .client-compact-btn { flex-shrink: 0; padding: 4px 10px; }
+  .client-editor { margin-top: 10px; }
+  .client-card.compact #clientItemReviewArea:not(:empty) { margin-top: 10px; }
+
+  /* 新しい商品を追加：バーコード読み取りの大きなボタン */
+  .scan-cta {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+    background: var(--accent); color: var(--accent-contrast);
+    border: none; border-radius: var(--radius-md); padding: 14px 16px; cursor: pointer; text-align: left;
+  }
+  .scan-cta svg { width: 30px; height: 30px; flex-shrink: 0; }
+  .scan-cta-text { display: flex; flex-direction: column; gap: 2px; }
+  .scan-cta-text b { font-size: 16px; font-weight: 700; }
+  .scan-cta-text small { font-size: 11.5px; opacity: 0.9; }
+  .scan-or {
+    display: flex; align-items: center; gap: 10px; margin: 14px 0 12px;
+    font-size: 11px; color: var(--text-muted);
+  }
+  .scan-or::before, .scan-or::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
+
   /* ---------- JANバーコード読み取り ---------- */
   .jan-input-row { display: flex; gap: 8px; align-items: stretch; }
   .jan-input-row input { flex: 1; min-width: 0; }
@@ -1046,7 +1076,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: min(380px, 90vw);
+    width: min(440px, 92vw);
     background: var(--surface);
     box-shadow: 2px 0 16px var(--shadow);
     z-index: 50;
@@ -1252,7 +1282,7 @@
       align-items: start;
       gap: 16px;
     }
-    .layout-grid > #csvDetails,
+    .layout-grid > .client-card,
     .layout-grid > .add-card {
       grid-column: 1;
     }
@@ -1313,67 +1343,37 @@
       <span id="csvStaleWarningText"></span>
     </button>
 
-    <details class="settings" id="settingsDetails">
-      <summary>
-        <span>デフォルト設定</span>
-        <span class="current mono" id="settingsSummary">&hellip;</span>
-        <span class="chev">&#9656;</span>
-      </summary>
-      <div class="settings-body">
-        <div class="field">
-          <label for="defMargin">マージン率 (%)</label>
-          <input type="number" id="defMargin" step="1" inputmode="decimal">
-        </div>
-        <div class="field">
-          <label for="defFx">為替レート（割る数値）</label>
-          <input type="number" id="defFx" step="0.001" inputmode="decimal">
-        </div>
-        <div class="settings-note">
-          提案価格 = 相場 &times; (1 + マージン率) &divide; 為替レート。例：マージン率3%・為替レート1.1なら「相場 &times; 1.03 &divide; 1.1」。新しい商品にはこの値が初期値として入りますが、商品ごとに上書きできます。
-        </div>
-        <div class="field full">
-          <label class="checkbox-row" for="defRound">
-            <input type="checkbox" id="defRound">
-            100円単位に丸める
-          </label>
-        </div>
-      </div>
-    </details>
 
     <div class="layout-grid">
-      <details class="settings" id="csvDetails">
-        <summary>
-          <span>CSVから相場を更新・新商品を登録（買取スキャナー）</span>
-          <span class="chev">&#9656;</span>
-        </summary>
-        <div class="settings-body csv-body">
-          <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を、③すでに商品リストに追加済みの商品も価格が変わっていれば更新候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
-          <div class="field full">
-            <input type="file" id="csvFileInput" accept=".csv,text/csv">
-          </div>
-          <div class="field full" id="csvStatus"></div>
-          <div class="field full" id="csvReviewArea"></div>
-          <div class="field full" id="csvItemReviewArea"></div>
-          <div class="field full" id="csvNewArea"></div>
-        </div>
-      </details>
 
-      <section class="card client-card">
-        <h2>取引先</h2>
-        <div class="client-row">
-          <select id="clientSelect">
-            <option value="">— 選択なし —</option>
-          </select>
-          <input type="text" id="clientNameInput" placeholder="新しい取引先名" autocomplete="off">
-          <button type="button" class="btn-ghost" id="clientAddBtn">追加</button>
+      <section class="card client-card compact" id="clientCard">
+        <div class="client-compact" id="clientCompact">
+          <span class="client-compact-label">取引先</span>
+          <span class="client-compact-name" id="clientCompactName">選択なし</span>
+          <button type="button" class="btn-ghost client-compact-btn" id="clientToggleBtn">選択・追加</button>
         </div>
-        <div class="client-hint" id="clientHint"></div>
+        <div class="client-editor" id="clientEditor" hidden>
+          <div class="client-row">
+            <select id="clientSelect">
+              <option value="">— 選択なし —</option>
+            </select>
+            <input type="text" id="clientNameInput" placeholder="新しい取引先名" autocomplete="off">
+            <button type="button" class="btn-ghost" id="clientAddBtn">追加</button>
+          </div>
+          <div class="client-hint" id="clientHint"></div>
+          <div id="clientManageArea"></div>
+        </div>
         <div id="clientItemReviewArea"></div>
-        <div id="clientManageArea"></div>
       </section>
 
       <section class="card add-card">
         <h2>新しい商品を追加</h2>
+        <button type="button" class="scan-cta" id="janScanBtnTop">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 9v6M11 9v6M14 9v6M17 9v6"/></svg>
+          <span class="scan-cta-text"><b>バーコードを読み取って追加</b><small>JANから商品名と相場を自動入力</small></span>
+        </button>
+        <div class="jan-scan-note" id="janScanNote" hidden></div>
+        <div class="scan-or"><span>または手入力</span></div>
         <div class="add-grid">
           <div class="field full name-field">
             <div class="field-label-row">
@@ -1405,7 +1405,6 @@
                 読み取る
               </button>
             </div>
-            <div class="jan-scan-note" id="janScanNote" hidden></div>
           </div>
           <div class="field full" id="janNameBox"></div>
           <div class="field full" id="scannerPriceBox"></div>
@@ -1455,6 +1454,23 @@
     <button type="button" id="drawerCloseBtn" class="btn-ghost">閉じる</button>
   </div>
   <div class="side-drawer-body">
+    <details class="settings" id="csvDetails">
+      <summary>
+        <span>CSVから相場を更新・新商品を登録（買取スキャナー）</span>
+        <span class="chev">&#9656;</span>
+      </summary>
+      <div class="settings-body csv-body">
+        <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を、③すでに商品リストに追加済みの商品も価格が変わっていれば更新候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
+        <div class="field full">
+          <input type="file" id="csvFileInput" accept=".csv,text/csv">
+        </div>
+        <div class="field full" id="csvStatus"></div>
+        <div class="field full" id="csvReviewArea"></div>
+        <div class="field full" id="csvItemReviewArea"></div>
+        <div class="field full" id="csvNewArea"></div>
+      </div>
+    </details>
+
     <details class="settings bulk-details" id="bulkDetails">
       <summary>
         <span>商品を一括登録</span>
@@ -1482,6 +1498,33 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         <p class="tmpl-hint">一度登録した商品は、下の「新しい商品を追加」で商品名を入力すると候補に出てきます。相場は「新しい商品を追加」から再登録すると更新されます。</p>
         <input type="text" class="tmpl-search" id="tmplSearch" placeholder="型番やJANコードで検索">
         <div class="tmpl-list" id="tmplList"></div>
+      </div>
+    </details>
+
+    <details class="settings" id="settingsDetails">
+      <summary>
+        <span>デフォルト設定</span>
+        <span class="current mono" id="settingsSummary">&hellip;</span>
+        <span class="chev">&#9656;</span>
+      </summary>
+      <div class="settings-body">
+        <div class="field">
+          <label for="defMargin">マージン率 (%)</label>
+          <input type="number" id="defMargin" step="1" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="defFx">為替レート（割る数値）</label>
+          <input type="number" id="defFx" step="0.001" inputmode="decimal">
+        </div>
+        <div class="settings-note">
+          提案価格 = 相場 &times; (1 + マージン率) &divide; 為替レート。例：マージン率3%・為替レート1.1なら「相場 &times; 1.03 &divide; 1.1」。新しい商品にはこの値が初期値として入りますが、商品ごとに上書きできます。
+        </div>
+        <div class="field full">
+          <label class="checkbox-row" for="defRound">
+            <input type="checkbox" id="defRound">
+            100円単位に丸める
+          </label>
+        </div>
       </div>
     </details>
 
@@ -1817,6 +1860,25 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var currentMatchedTemplate = null;
 
   // ---------- 取引先（買い手企業）ごとの固定価格 ----------
+  // 取引先は、選んだあとは「取引先: ○○ ［変更］」の小さな1行だけにして、
+  // 選択欄・追加欄・削除一覧は［変更］を押した時だけ開く。
+  var clientEditorOpen = false;
+  function renderClientCompact() {
+    var c = state.selectedClientId ? currentClient() : null;
+    var nameEl = document.getElementById('clientCompactName');
+    var btn = document.getElementById('clientToggleBtn');
+    var editor = document.getElementById('clientEditor');
+    if (!nameEl || !btn || !editor) return;
+    nameEl.textContent = c ? c.name : '選択なし';
+    nameEl.classList.toggle('selected', !!c);
+    btn.textContent = clientEditorOpen ? '閉じる' : (c ? '変更' : '選択・追加');
+    editor.hidden = !clientEditorOpen;
+  }
+  document.getElementById('clientToggleBtn').addEventListener('click', function () {
+    clientEditorOpen = !clientEditorOpen;
+    renderClientCompact();
+  });
+
   function renderClientSelect() {
     var opts = ['<option value="">— 選択なし —</option>'];
     state.clients.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'ja'); }).forEach(function (c) {
@@ -1826,6 +1888,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   }
 
   function renderClientHint() {
+    renderClientCompact();
     if (!state.selectedClientId) {
       clientHint.textContent = '取引先を選ぶと、その取引先向けに固定している商品は自動でその価格になります。';
       clientHint.classList.remove('active');
@@ -1969,6 +2032,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   clientSelect.addEventListener('change', function () {
     state.selectedClientId = clientSelect.value || null;
     saveSelectedClientId(state.selectedClientId);
+    clientEditorOpen = false; // 選び終わったら選択欄はたたむ
     renderClientHint();
     renderClientItemReview();
     renderTemplates();
@@ -1986,6 +2050,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         state.selectedClientId = id;
         saveSelectedClientId(id);
         clientNameInput.value = '';
+        clientEditorOpen = false;
         renderClientSelect();
         renderClientHint();
         renderClientItemReview();
@@ -2632,6 +2697,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   }
 
   janScanBtn.addEventListener('click', openScanner);
+  document.getElementById('janScanBtnTop').addEventListener('click', openScanner);
   scanCloseBtn.addEventListener('click', stopScanner);
   document.addEventListener('visibilitychange', function () { if (document.hidden && scanSession) stopScanner(); });
   inJan.addEventListener('input', function () { setJanScanNote(''); });
@@ -3062,10 +3128,12 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
   }
   csvStaleWarning.addEventListener('click', function () {
+    // CSVの取り込みは左のメニューの中にあるので、メニューを開いてから展開する。
     var details = document.getElementById('csvDetails');
+    openDrawer();
     if (details) {
       details.open = true;
-      details.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(function () { details.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 300);
     }
   });
 
