@@ -586,6 +586,57 @@
   }
   .scan-or::before, .scan-or::after { content: ""; flex: 1; height: 1px; background: var(--border-soft); }
 
+
+  /* ---------- 読み取り結果の確認画面 ---------- */
+  .sc-overlay {
+    position: fixed; inset: 0; z-index: 3100; background: rgba(0,0,0,.55);
+    display: flex; align-items: flex-end; justify-content: center; overflow-y: auto;
+  }
+  .sc-overlay[hidden] { display: none; }
+  .sc-sheet {
+    background: var(--surface); width: 100%; max-width: 520px; max-height: 94vh; overflow-y: auto;
+    border-radius: 18px 18px 0 0; padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 18px);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  @media (min-width: 640px) { .sc-overlay { align-items: center; } .sc-sheet { border-radius: 18px; } }
+  .sc-title { font-size: 16px; font-weight: 700; }
+  .sc-jan { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 14px; font-weight: 600; }
+  .sc-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); }
+  .sc-badge.reg { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent); }
+  .sc-dup { font-size: 12px; padding: 8px 10px; border-radius: var(--radius-sm); border: 1px solid var(--danger); color: var(--danger); }
+  .sc-sec { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 6px; }
+  .sc-hint { font-size: 11.5px; color: var(--text-muted); }
+  .sc-opts { display: flex; flex-direction: column; gap: 6px; }
+  .sc-opt {
+    display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; cursor: pointer;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2);
+  }
+  .sc-opt:has(input[type="radio"]:checked) { border-color: var(--accent); background: var(--accent-soft); }
+  .sc-opt input[type="radio"] { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--accent); }
+  .sc-opt-body { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+  .sc-opt-main { font-size: 14px; font-weight: 600; word-break: break-word; }
+  .sc-opt-sub { font-size: 11px; color: var(--text-muted); word-break: break-word; }
+  .sc-price-row { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; }
+  .sc-price { font-size: 16px; font-weight: 700; white-space: nowrap; }
+  .sc-tag { font-size: 10px; margin-left: 6px; padding: 2px 6px; border-radius: 5px; background: var(--accent); color: var(--accent-contrast); vertical-align: middle; }
+  .sc-in {
+    width: 100%; box-sizing: border-box; font: inherit; font-size: 14px; padding: 8px 10px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
+  }
+  .sc-qty { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; margin-top: 4px; }
+  .sc-stepper { display: flex; align-items: center; gap: 6px; }
+  .sc-stepper button { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font-size: 18px; cursor: pointer; }
+  .sc-stepper input { width: 64px; text-align: center; font: inherit; font-size: 16px; padding: 8px 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); }
+  .sc-preview { display: flex; align-items: baseline; justify-content: space-between; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px dashed var(--accent); background: var(--surface-2); font-size: 13px; }
+  .sc-preview b { font-size: 20px; color: var(--accent-strong); }
+  .sc-cont { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+  .sc-cont input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .sc-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+  .sc-btns .btn-primary { width: 100%; padding: 14px; font-size: 16px; margin-top: 0; }
+  .sc-btns .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+  .sc-btns-sub { display: flex; gap: 8px; }
+  .sc-btns-sub .btn-ghost { flex: 1; padding: 10px; font-size: 13px; }
+
   /* ---------- JANバーコード読み取り ---------- */
   .jan-input-row { display: flex; gap: 8px; align-items: stretch; }
   .jan-input-row input { flex: 1; min-width: 0; }
@@ -622,7 +673,7 @@
     border: 3px solid rgba(255,255,255,.9); border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,.45);
     pointer-events: none;
   }
-  .scan-status { padding: 14px 16px 22px; font-size: 13px; text-align: center; min-height: 20px; }
+  .scan-status { padding: 14px 16px 22px; font-size: 13px; text-align: center; min-height: 20px; white-space: pre-line; }
 
   .jan-name-box {
     background: var(--surface-2);
@@ -1310,6 +1361,8 @@
   <div class="scan-status" id="scanStatus"></div>
 </div>
 
+<div class="sc-overlay" id="scanConfirm" hidden></div>
+
 <div id="pullRefreshIndicator" class="pull-refresh-indicator">↓ 引っ張って更新</div>
 
 <div class="app">
@@ -1398,13 +1451,7 @@
           </div>
           <div class="field full">
             <label for="inJan">JANコード（任意）</label>
-            <div class="jan-input-row">
-              <input type="text" id="inJan" inputmode="numeric" placeholder="4549292157345">
-              <button type="button" class="jan-scan-btn" id="janScanBtn" aria-label="カメラでバーコードを読み取る">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 9v6M11 9v6M14 9v6M17 9v6"/></svg>
-                読み取る
-              </button>
-            </div>
+            <input type="text" id="inJan" inputmode="numeric" placeholder="4549292157345">
           </div>
           <div class="field full" id="janNameBox"></div>
           <div class="field full" id="scannerPriceBox"></div>
@@ -2521,7 +2568,6 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   // ある→日本語名・英語名の推測・最高値を入れる ③どこにも無い→JANだけ入れて
   // 商品名・相場の入力を促す。（追加すると登録されるので次回からは①になる）
   var ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
-  var janScanBtn = document.getElementById('janScanBtn');
   var janScanNote = document.getElementById('janScanNote');
   var scanOverlay = document.getElementById('scanOverlay');
   var scanVideo = document.getElementById('scanVideo');
@@ -2529,6 +2575,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   var scanCloseBtn = document.getElementById('scanCloseBtn');
   var scanSession = null; // { stream, timer, reader, done }
   var zxingPromise = null;
+  var scanNotice = ''; // 連続読み取り時に「追加しました」を読み取り画面に出す
 
   function setJanScanNote(html, kind) {
     if (!html) { janScanNote.hidden = true; janScanNote.innerHTML = ''; janScanNote.className = 'jan-scan-note'; return; }
@@ -2593,7 +2640,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       return;
     }
     scanOverlay.hidden = false;
-    scanStatus.textContent = 'カメラを起動しています…';
+    scanStatus.textContent = (scanNotice ? scanNotice + '\n' : '') + 'カメラを起動しています…';
     var sess = { stream: null, timer: null, reader: null, done: false };
     scanSession = sess;
     var constraints = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
@@ -2617,7 +2664,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         sess.stream = stream;
         scanVideo.srcObject = stream;
         var p = scanVideo.play(); if (p && p.catch) p.catch(function () {});
-        scanStatus.textContent = 'バーコードを探しています…';
+        scanStatus.textContent = (scanNotice ? scanNotice + '\n' : '') + 'バーコードを探しています…';
         var busy = false;
         sess.timer = setInterval(function () {
           if (busy || sess.done) return;
@@ -2636,7 +2683,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A]);
         var reader = new Z.BrowserMultiFormatReader(hints, 200);
         sess.reader = reader;
-        scanStatus.textContent = 'バーコードを探しています…';
+        scanStatus.textContent = (scanNotice ? scanNotice + '\n' : '') + 'バーコードを探しています…';
         return reader.decodeFromConstraints(constraints, scanVideo, function (result) {
           if (result) onScanned(sess, result.getText());
         });
@@ -2650,54 +2697,200 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
   }
 
-  function applyScannedJan(jan) {
-    // 前の商品の入力が残っていると混ざるので、読み取るたびに入力欄を空にしてから入れる。
-    inName.value = '';
-    inNameJa.value = '';
-    inBase.value = '';
-    inQty.value = '1';
-    currentMatchedTemplate = null;
-    hideNameSuggestions();
-    inJan.value = jan;
+  // ---------- 読み取り結果の確認画面（選択式） ----------
+  // 読み取った直後は入力欄に直接入れず、この確認画面で商品名・相場・数量を
+  // 選んでから「リストに追加」を押す。押すまで今の入力欄には一切触れないので、
+  // 読み間違い・消し間違いが起きない。
+  var scanConfirmEl = document.getElementById('scanConfirm');
+  var sc = null; // 確認画面の状態
 
-    var tmpl = state.templates.filter(function (t) { return (t.janCode || '').trim() === jan; })[0];
+  function scProposal(base) {
+    var tmpl = sc.tmpl;
+    var margin = state.settings.marginPercent, fx = state.settings.fxRate, round = state.settings.roundTo100;
     if (tmpl) {
-      inName.value = tmpl.englishName;
-      inName.dispatchEvent(new Event('input')); // 価格・日本語名・商品の紐づけは入力欄の処理に任せる
-      hideNameSuggestions();
-      updatePreview();
-      renderScannerPriceBox();
-      renderJanNameBox();
-      setJanScanNote('<b>' + esc(jan) + '</b> を読み取りました。登録済みの商品の名前と価格を入れました。', 'ok');
-      return;
+      var co = state.selectedClientId ? findClientPrice(state.selectedClientId, tmpl.id) : null;
+      if (co) return { value: co.fixedProposalPriceJPY, note: '取引先の固定価格が適用されます' };
+      if (tmpl.priceFixed) {
+        return { value: tmpl.fixedProposalPriceJPY != null ? tmpl.fixedProposalPriceJPY : computeProposal(tmpl.basePriceJPY, margin, fx, round), note: '固定価格の商品です' };
+      }
     }
+    return { value: computeProposal(base, margin, fx, round), note: '' };
+  }
 
-    var refNames = csvNameByJan[jan];
-    var offers = csvIndexByJan[jan];
-    var hasRef = !!(refNames && refNames.length);
-    var hasOffer = !!(offers && offers.length);
-    if (hasRef) {
-      var best = pickBestName(refNames);
-      inName.value = guessEnglishName(best);
-      inNameJa.value = best;
+  function openScanConfirm(jan) {
+    var tmpl = state.templates.filter(function (t) { return (t.janCode || '').trim() === jan; })[0] || null;
+    var refNames = csvNameByJan[jan] || [];
+    var offers = csvIndexByJan[jan] || [];
+    var hasCsv = Object.keys(csvIndexByJan).length > 0;
+
+    var nameOpts = [];
+    var seen = {};
+    if (tmpl) {
+      nameOpts.push({ en: tmpl.englishName, ja: tmpl.japaneseName || '', sub: '登録済みの商品名' + (tmpl.japaneseName ? '｜' + tmpl.japaneseName : '') });
+      seen[tmpl.englishName.toLowerCase()] = true;
     }
-    if (hasOffer) inBase.value = offers[0].price;
+    if (refNames.length) {
+      var best = pickBestName(refNames);
+      [best].concat(refNames.filter(function (n) { return n !== best; })).forEach(function (n) {
+        var en = guessEnglishName(n);
+        if (seen[en.toLowerCase()]) return;
+        seen[en.toLowerCase()] = true;
+        nameOpts.push({ en: en, ja: n, sub: '買取スキャナー：' + n + '（英語名は自動の推測）' });
+      });
+    }
+    var priceOpts = [];
+    offers.forEach(function (o, i) { priceOpts.push({ price: o.price, main: o.shop, tag: i === 0 ? '最高値' : '' }); });
+    if (tmpl) priceOpts.push({ price: tmpl.basePriceJPY, main: '前回の相場（登録済み）', tag: '' });
+
+    var dup = state.items.filter(function (it) { return (it.janCode || '').trim() === jan; });
+    sc = { jan: jan, tmpl: tmpl, nameOpts: nameOpts, priceOpts: priceOpts, nameSel: null, priceSel: null, hasCsv: hasCsv, dup: dup };
+
+    var status = tmpl ? '登録済みの商品' : (refNames.length || offers.length ? '未登録（買取スキャナーのCSVにあり）' : '未登録（CSVにも見つかりません）');
+    var html = '<div class="sc-sheet" role="dialog" aria-modal="true">' +
+      '<div class="sc-head"><div class="sc-title">読み取り結果の確認</div></div>' +
+      '<div class="sc-jan"><span class="mono">JAN ' + esc(jan) + '</span><span class="sc-badge' + (tmpl ? ' reg' : '') + '">' + status + '</span></div>' +
+      (dup.length ? '<div class="sc-dup">このJANコードの商品は、すでに商品リストにあります（数量 ' + dup.map(function (d) { return d.quantity || 1; }).join('・') + '）。</div>' : '') +
+      '<div class="sc-sec">商品名を選んでください</div><div class="sc-opts">' +
+      nameOpts.map(function (o, i) {
+        return '<label class="sc-opt"><input type="radio" name="scName" value="' + i + '"><span class="sc-opt-body"><span class="sc-opt-main">' + esc(o.en) + '</span><span class="sc-opt-sub">' + esc(o.sub) + '</span></span></label>';
+      }).join('') +
+      '<label class="sc-opt"><input type="radio" name="scName" value="manual"><span class="sc-opt-body"><span class="sc-opt-main">手入力する</span>' +
+        '<input type="text" class="sc-in" id="scManualEn" placeholder="英語の商品名（例：Canon EOS R5 Body）" autocomplete="off">' +
+        '<input type="text" class="sc-in" id="scManualJa" placeholder="日本語の商品名（任意）" autocomplete="off"></span></label>' +
+      '</div>' +
+      '<div class="sc-sec">相場を選んでください' + (offers.length ? '（買取業者ごと）' : '') + '</div>' +
+      (!offers.length ? '<div class="sc-hint">' + (hasCsv ? 'このJANコードの買取スキャナー価格はCSVに見つかりませんでした。' : '買取スキャナーのCSVを読み込むと、ここに各社の価格が出ます。') + '</div>' : '') +
+      '<div class="sc-opts">' +
+      priceOpts.map(function (o, i) {
+        return '<label class="sc-opt"><input type="radio" name="scPrice" value="' + i + '"><span class="sc-opt-body sc-price-row"><span class="sc-opt-main">' + esc(o.main) + (o.tag ? '<span class="sc-tag">' + o.tag + '</span>' : '') + '</span><span class="sc-price mono">&yen;' + Math.round(o.price).toLocaleString('ja-JP') + '</span></span></label>';
+      }).join('') +
+      '<label class="sc-opt"><input type="radio" name="scPrice" value="manual"><span class="sc-opt-body"><span class="sc-opt-main">手入力する</span>' +
+        '<input type="number" class="sc-in" id="scManualPrice" inputmode="numeric" placeholder="相場 (JPY)"></span></label>' +
+      '</div>' +
+      '<div class="sc-qty"><span>数量</span><div class="sc-stepper"><button type="button" data-act="qty-" aria-label="減らす">−</button><input type="number" id="scQty" min="1" step="1" value="1" inputmode="numeric"><button type="button" data-act="qty+" aria-label="増やす">＋</button></div></div>' +
+      '<div class="sc-preview"><span>提案価格</span><b class="mono" id="scPreview">&mdash;</b></div><div class="sc-hint" id="scPreviewNote"></div>' +
+      '<label class="sc-cont"><input type="checkbox" id="scCont" checked>追加したら、続けて次のバーコードを読み取る</label>' +
+      '<div class="sc-btns"><button type="button" class="btn-primary" id="scAdd" data-act="add" disabled>リストに追加</button>' +
+      '<div class="sc-btns-sub"><button type="button" class="btn-ghost" data-act="rescan">読み取り直す</button><button type="button" class="btn-ghost" data-act="cancel">キャンセル</button></div></div>' +
+      '</div>';
+    scanConfirmEl.innerHTML = html;
+    scanConfirmEl.hidden = false;
+    scanConfirmEl.scrollTop = 0;
+    // 登録済みの商品名はJANが一致しているので最初から選んでおく。それ以外（相場・
+    // 未登録の商品名）は、間違いを防ぐため毎回自分で選ぶ。
+    if (tmpl) { var first = scanConfirmEl.querySelector('input[name="scName"][value="0"]'); if (first) first.checked = true; }
+    scUpdate();
+  }
+
+  function scSelectedName() {
+    var v = (scanConfirmEl.querySelector('input[name="scName"]:checked') || {}).value;
+    if (v == null) return null;
+    if (v === 'manual') {
+      var en = document.getElementById('scManualEn').value.trim();
+      return en ? { en: en, ja: document.getElementById('scManualJa').value.trim() } : null;
+    }
+    var o = sc.nameOpts[parseInt(v, 10)];
+    return o ? { en: o.en, ja: o.ja } : null;
+  }
+  function scSelectedPrice() {
+    var v = (scanConfirmEl.querySelector('input[name="scPrice"]:checked') || {}).value;
+    if (v == null) return null;
+    var price = v === 'manual' ? parseFloat(document.getElementById('scManualPrice').value) : (sc.priceOpts[parseInt(v, 10)] || {}).price;
+    return isFinite(price) && price > 0 ? price : null;
+  }
+  function scQty() {
+    var q = parseInt(document.getElementById('scQty').value, 10);
+    return isFinite(q) && q > 0 ? q : 1;
+  }
+  function scUpdate() {
+    if (!sc) return;
+    var name = scSelectedName(), price = scSelectedPrice();
+    var prev = document.getElementById('scPreview'), note = document.getElementById('scPreviewNote');
+    if (price) { var pr = scProposal(price); prev.textContent = fmtYen(pr.value); note.textContent = pr.note; }
+    else { prev.innerHTML = '&mdash;'; note.textContent = ''; }
+    document.getElementById('scAdd').disabled = !(name && price);
+  }
+  function closeScanConfirm() {
+    sc = null;
+    scanConfirmEl.hidden = true;
+    scanConfirmEl.innerHTML = '';
+  }
+
+  scanConfirmEl.addEventListener('change', function (e) {
+    if (!sc) return;
+    var t = e.target;
+    // 「手入力」を選んだ時、直前に選んでいた候補の名前を初期値に入れて直しやすくする
+    if (t.name === 'scName' && t.value === 'manual') {
+      var en = document.getElementById('scManualEn');
+      if (!en.value && sc.lastNameSel != null && sc.nameOpts[sc.lastNameSel]) {
+        en.value = sc.nameOpts[sc.lastNameSel].en;
+        document.getElementById('scManualJa').value = sc.nameOpts[sc.lastNameSel].ja;
+      }
+      en.focus();
+    }
+    if (t.name === 'scName' && t.value !== 'manual') sc.lastNameSel = parseInt(t.value, 10);
+    scUpdate();
+  });
+  scanConfirmEl.addEventListener('input', function (e) {
+    if (!sc) return;
+    var id = e.target.id;
+    if (id === 'scManualEn' || id === 'scManualJa') scanConfirmEl.querySelector('input[name="scName"][value="manual"]').checked = true;
+    if (id === 'scManualPrice') scanConfirmEl.querySelector('input[name="scPrice"][value="manual"]').checked = true;
+    scUpdate();
+  });
+  scanConfirmEl.addEventListener('click', function (e) {
+    if (!sc) return;
+    var btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    var qtyEl = document.getElementById('scQty');
+    if (act === 'qty+') { qtyEl.value = scQty() + 1; return; }
+    if (act === 'qty-') { qtyEl.value = Math.max(1, scQty() - 1); return; }
+    if (act === 'cancel') { closeScanConfirm(); return; }
+    if (act === 'rescan') { closeScanConfirm(); scanNotice = ''; openScanner(); return; }
+    if (act === 'add') confirmScanAdd();
+  });
+
+  function confirmScanAdd() {
+    var name = scSelectedName(), price = scSelectedPrice();
+    if (!sc || !name || !price) return;
+    if (!state.db) { document.getElementById('scPreviewNote').textContent = '同期の準備中です。少し待ってからもう一度押してください。'; return; }
+    if (addBtn.disabled) { document.getElementById('scPreviewNote').textContent = '前の追加を処理中です。少し待ってからもう一度押してください。'; return; }
+    var qty = scQty();
+    var jan = sc.jan;
+    var continuous = document.getElementById('scCont').checked;
+
+    // 既存の「リストに追加」の処理（固定価格・取引先価格・商品登録など）をそのまま
+    // 使うため、いったん入力欄に値を入れてボタンを押し、終わったら元の入力に戻す。
+    var snap = { name: inName.value, ja: inNameJa.value, base: inBase.value, qty: inQty.value, jan: inJan.value, round: inRound.checked };
+    inName.value = name.en;
+    inName.dispatchEvent(new Event('input'));
+    hideNameSuggestions();
+    inNameJa.value = name.ja;
+    inBase.value = price;
+    inQty.value = String(qty);
+    inJan.value = jan;
+    updatePreview();
+    addBtn.click();
+    inName.value = snap.name; inNameJa.value = snap.ja; inBase.value = snap.base; inQty.value = snap.qty || '1'; inJan.value = snap.jan; inRound.checked = snap.round;
+    if (snap.name) inName.dispatchEvent(new Event('input'));
+    inBase.value = snap.base;
     updatePreview();
     renderScannerPriceBox();
     renderJanNameBox();
+    hideNameSuggestions();
 
-    if (hasRef || hasOffer) {
-      setJanScanNote('<b>' + esc(jan) + '</b> を読み取りました。未登録の商品なので、買取スキャナーのCSVから' +
-        (hasRef ? '商品名（英語名は自動の推測です。必ず確認・修正してください）' : '') +
-        (hasRef && hasOffer ? 'と' : '') + (hasOffer ? '相場（最高値）' : '') + 'を入れました。', 'ok');
-    } else {
-      setJanScanNote('<b>' + esc(jan) + '</b> を読み取りました。未登録の商品で、買取スキャナーのCSVにも見つかりませんでした。商品名と相場を入力してください（追加すると登録され、次回から自動で入ります）。', 'warn');
-      inName.focus();
+    closeScanConfirm();
+    if (continuous) {
+      scanNotice = '追加しました：' + name.en + (qty > 1 ? '（' + qty + '個）' : '');
+      openScanner();
     }
   }
 
-  janScanBtn.addEventListener('click', openScanner);
-  document.getElementById('janScanBtnTop').addEventListener('click', openScanner);
+  function applyScannedJan(jan) { openScanConfirm(jan); }
+
+  document.getElementById('janScanBtnTop').addEventListener('click', function () { scanNotice = ''; openScanner(); });
+
   scanCloseBtn.addEventListener('click', stopScanner);
   document.addEventListener('visibilitychange', function () { if (document.hidden && scanSession) stopScanner(); });
   inJan.addEventListener('input', function () { setJanScanNote(''); });
