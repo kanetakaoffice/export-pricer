@@ -4735,10 +4735,16 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
   }
 
+  // 日本語表示 = 国内企業向け → 買取スキャナーの相場（basePriceJPY）、
+  // 英語表示 = 海外の相手企業向け → 提示する価格（proposalPriceJPY）。
+  function sendPrice(it) {
+    return state.nameDisplayLang === 'ja' ? it.basePriceJPY : it.proposalPriceJPY;
+  }
+
   function performCopyList() {
     var blocks = state.items.map(function (it) {
       var qty = it.quantity || 1;
-      return (displayName(it) || it.englishName) + '\n' + (it.janCode || '') + '✖️' + qty + '\nJPY' + Math.round(it.proposalPriceJPY);
+      return (displayName(it) || it.englishName) + '\n' + (it.janCode || '') + '✖️' + qty + '\nJPY' + Math.round(sendPrice(it));
     });
     var text = blocks.join('\n\n');
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -4762,31 +4768,34 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   function renderFinalConfirm() {
     if (finalConfirmEl.hidden) return;
     if (!state.items.length) { closeFinalConfirm(); return; }
-    var c = currentClient();
+    var isJa = state.nameDisplayLang === 'ja';
+    var c = isJa ? null : currentClient();
     var mismatches = c ? computeClientItemMatches(c.id) : [];
     var mismatchIds = {};
     mismatches.forEach(function (m) { mismatchIds[m.itemId] = m; });
     var total = 0, totalQty = 0;
     var rowsHtml = state.items.map(function (it) {
       var qty = it.quantity || 1;
-      total += Math.round(it.proposalPriceJPY) * qty; totalQty += qty;
+      total += Math.round(sendPrice(it)) * qty; totalQty += qty;
       var tid = slugify(it.englishName);
       var cp = c ? findClientPrice(c.id, tid) : null;
       var tmpl = state.templates.filter(function (t) { return t.id === tid; })[0];
       var basis = '<span class="fc-basis">相場計算</span>';
-      if (mismatchIds[it.id]) basis = '<span class="fc-basis" style="border-color:var(--danger);color:var(--danger)">価格にズレあり</span>';
+      if (isJa) basis = '<span class="fc-basis">相場（買取スキャナー）</span>';
+      else if (mismatchIds[it.id]) basis = '<span class="fc-basis" style="border-color:var(--danger);color:var(--danger)">価格にズレあり</span>';
       else if (cp) {
         var e = clientProposalFor(cp, it.basePriceJPY, it.marginPercent, it.fxRate, it.roundTo100);
         basis = e.usedFixed ? '<span class="fc-basis fixed">' + esc(c.name) + 'の固定価格</span>' : '<span class="fc-basis">相場計算（固定価格より高い）</span>';
       } else if (tmpl && tmpl.priceFixed) basis = '<span class="fc-basis fixed">固定価格の商品</span>';
       return '<div class="fc-row"><div class="fc-row-main"><div class="fc-row-name">' + esc(displayName(it) || it.englishName) + '</div>' +
         '<div class="fc-row-sub">JAN: ' + (it.janCode ? esc(it.janCode) : '—') + ' ／ 数量 ' + qty + '</div>' + basis + '</div>' +
-        '<div class="fc-row-price">' + fmtYen(it.proposalPriceJPY) + '</div></div>';
+        '<div class="fc-row-price">' + fmtYen(sendPrice(it)) + '</div></div>';
     }).join('');
     var html = '<div class="sc-sheet" role="dialog" aria-modal="true">' +
       '<div class="sc-title">送付前の最終確認</div>' +
-      '<div class="fc-total" style="text-align:left">コピーする商品名: ' + (state.nameDisplayLang === 'ja' ? '日本語（日本語名が未登録の商品は英語名）' : '英語') + '</div>' +
-      (c ? '<div class="fc-client">取引先: ' + esc(c.name) + '</div>'
+      '<div class="fc-total" style="text-align:left">コピーする商品名: ' + (state.nameDisplayLang === 'ja' ? '日本語（日本語名が未登録の商品は英語名）／価格は相場' : '英語／価格は提示価格') + '</div>' +
+      (isJa ? '<div class="fc-client">日本語表示：国内企業向け（買取スキャナーの相場の価格でコピーします）</div>'
+       : c ? '<div class="fc-client">取引先: ' + esc(c.name) + '</div>'
          : '<div class="fc-client none">取引先が選択されていません（取引先ごとの固定価格は反映されていません）</div>');
     if (mismatches.length) {
       html += '<div class="fc-warn"><div>' + mismatches.length + '件、' + esc(c.name) + '向けの価格（固定価格と相場計算の高い方）と異なる商品があります。</div>' +
