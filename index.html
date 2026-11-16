@@ -553,6 +553,7 @@
     cursor: pointer;
   }
   .scanner-chip:hover { border-color: var(--accent); color: var(--accent-strong); }
+  .scanner-chip.picked { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
   .scanner-box-none { font-size: 11px; color: var(--text-muted); }
 
 
@@ -4060,6 +4061,31 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     bindItemEvents();
   }
 
+  // 編集画面に、そのJANコードの買取スキャナー（各社）の価格を出す。
+  // 押すと相場の欄に入る（提示する価格は「再計算する」を押した時に反映）。
+  function renderItemOffersHtml(item) {
+    var jan = (item.janCode || '').trim();
+    if (!jan) return '<div class="scanner-box-none">JANコードが未登録のため、買取スキャナーの価格は表示できません。</div>';
+    if (Object.keys(csvIndexByJan).length === 0) {
+      return '<div class="scanner-box-none">買取スキャナーのCSVを読み込むと、ここに各社の価格が表示されます（左のメニューの「CSVから相場を更新」）。</div>';
+    }
+    var offers = csvIndexByJan[jan];
+    if (!offers || offers.length === 0) {
+      return '<div class="scanner-box-none">このJANコードの買取スキャナー価格は見つかりませんでした' +
+        (csvIndexSavedAt ? '（CSV取り込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '）' : '') + '</div>';
+    }
+    var chips = offers.map(function (o, i) {
+      return '<button type="button" class="scanner-chip e-offer-chip" data-price="' + o.price + '">' +
+        esc(o.shop) + ' &yen;' + Math.round(o.price).toLocaleString('ja-JP') + (i === 0 ? '（最高値）' : '') + '</button>';
+    }).join('');
+    return '<div class="scanner-box">' +
+      '<div class="scanner-box-head"><span class="scanner-box-label">買取スキャナー各社の価格（押すと上の相場に入ります）' +
+        (csvIndexSavedAt ? '<br><small>CSV取り込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '</small>' : '') + '</span></div>' +
+      '<div class="scanner-offers">' + chips + '</div>' +
+      '<div class="scanner-box-none" style="margin-top:6px;">相場を選んだあと、提示する価格にも反映したい時は「再計算する」を押してください。</div>' +
+    '</div>';
+  }
+
   function renderItemCard(item) {
     var editing = state.editingId === item.id;
     var confirming = state.confirmingId === item.id;
@@ -4074,6 +4100,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             '<div class="field full"><label>提示する価格 (JPY)　<span class="field-hint-inline">相手企業に提示する最終的な価格。直接変更できます</span></label><input type="number" class="e-proposal mono" value="' + item.proposalPriceJPY + '"></div>' +
             '<div class="field"><label>相場 (JPY)</label><input type="number" class="e-base" value="' + item.basePriceJPY + '"></div>' +
             '<div class="field"><label>数量</label><input type="number" min="1" step="1" class="e-qty" value="' + (item.quantity || 1) + '"></div>' +
+            '<div class="field full">' + renderItemOffersHtml(item) + '</div>' +
             '<div class="field full"><label>JANコード</label><input type="text" class="e-jan" value="' + esc(item.janCode || '') + '"></div>' +
             '<div class="field"><label>マージン率 (%)</label><input type="number" class="e-margin" value="' + item.marginPercent + '"></div>' +
             '<div class="field"><label>為替レート（割る数値）</label><input type="number" step="0.001" class="e-fx" value="' + item.fxRate + '"></div>' +
@@ -4152,6 +4179,13 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     });
     itemList.querySelectorAll('.e-cancel').forEach(function (btn) {
       btn.addEventListener('click', function () { state.editingId = null; renderList(); });
+    });
+    itemList.querySelectorAll('.e-offer-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var card = chip.closest('.item-card');
+        card.querySelector('.e-base').value = parseFloat(chip.getAttribute('data-price'));
+        card.querySelectorAll('.e-offer-chip').forEach(function (c) { c.classList.toggle('picked', c === chip); });
+      });
     });
     itemList.querySelectorAll('.e-recalc').forEach(function (btn) {
       btn.addEventListener('click', function () {
