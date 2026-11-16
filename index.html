@@ -683,6 +683,22 @@
   .sc-preview b { font-size: 20px; color: var(--accent-strong); }
   .sc-cont { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
   .sc-cont input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .fc-client { font-size: 14px; font-weight: 700; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--accent-strong); }
+  .fc-client.none { background: transparent; border: 1px solid var(--danger); color: var(--danger); font-weight: 600; font-size: 12.5px; }
+  .fc-warn { font-size: 12.5px; padding: 9px 10px; border-radius: var(--radius-sm); border: 1px solid var(--danger); color: var(--danger); display: flex; flex-direction: column; gap: 6px; }
+  .fc-warn button { align-self: flex-start; }
+  .fc-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+  .fc-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 9px 10px; border-top: 1px solid var(--border-soft); font-size: 13px; }
+  .fc-row:first-child { border-top: none; }
+  .fc-row-main { min-width: 0; flex: 1; }
+  .fc-row-name { font-weight: 600; word-break: break-word; }
+  .fc-row-sub { font-size: 11px; color: var(--text-muted); }
+  .fc-row-price { text-align: right; white-space: nowrap; font-weight: 700; }
+  .fc-basis { display: inline-block; font-size: 10px; font-weight: 600; margin-top: 2px; padding: 1px 6px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-muted); }
+  .fc-basis.fixed { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+  .fc-total { font-size: 12px; color: var(--text-muted); text-align: right; }
+  .fc-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .fc-btns .btn-primary { padding: 14px; font-size: 15px; }
   .sc-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
   .sc-btns .btn-primary { width: 100%; padding: 14px; font-size: 16px; margin-top: 0; }
   .sc-btns .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
@@ -1414,6 +1430,7 @@
 </div>
 
 <div class="sc-overlay" id="scanConfirm" hidden></div>
+<div class="sc-overlay" id="finalConfirm" hidden></div>
 
 <div id="pullRefreshIndicator" class="pull-refresh-indicator">↓ 引っ張って更新</div>
 
@@ -1717,6 +1734,17 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   }
   function currentClient() {
     return state.clients.filter(function (c) { return c.id === state.selectedClientId; })[0] || null;
+  }
+  // 取引先の固定価格 と 相場からの計算価格 を比べて高い方を提示価格にする。
+  // 相場が上がって固定価格より高くなった時に、安い固定価格のまま送って
+  // しまわないための仕組み。同額の場合は固定価格扱い。
+  function clientProposalFor(cp, base, margin, fx, round) {
+    var fixed = cp && cp.fixedProposalPriceJPY != null ? Number(cp.fixedProposalPriceJPY) : NaN;
+    var hasBase = isFinite(Number(base)) && Number(base) > 0;
+    var calc = hasBase ? computeProposal(base, margin, fx, round) : null;
+    if (!isFinite(fixed)) return { value: calc, calc: calc, fixed: null, usedFixed: false };
+    if (calc == null) return { value: fixed, calc: null, fixed: fixed, usedFixed: true };
+    return { value: Math.max(fixed, calc), calc: calc, fixed: fixed, usedFixed: fixed >= calc };
   }
 
   function slugify(name) {
@@ -2023,13 +2051,18 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       var templateId = slugify(it.englishName);
       var cp = findClientPrice(clientId, templateId);
       if (!cp || cp.fixedProposalPriceJPY == null) return null;
-      if (cp.fixedProposalPriceJPY === it.proposalPriceJPY) return null;
+      var eff = clientProposalFor(cp, it.basePriceJPY, it.marginPercent, it.fxRate, it.roundTo100);
+      if (eff.value === it.proposalPriceJPY) return null;
       return {
         itemId: it.id,
         name: it.englishName,
         janCode: it.janCode,
         oldPrice: it.proposalPriceJPY,
-        newPrice: cp.fixedProposalPriceJPY
+        newPrice: eff.value,
+        usedFixed: eff.usedFixed,
+        fixedPrice: eff.fixed,
+        calcPrice: eff.calc,
+        itemClientId: it.clientId
       };
     }).filter(Boolean);
   }
@@ -2040,7 +2073,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     clientItemMatches = c ? computeClientItemMatches(c.id) : [];
     if (!c || clientItemMatches.length === 0) { clientItemReviewArea.innerHTML = ''; return; }
     var html = '<div class="csv-review-head">' +
-      '<span>' + esc(c.name) + '向けの固定価格と異なる商品がすでにリストにあります</span>' +
+      '<span>' + esc(c.name) + '向けの価格（固定価格と相場計算の高い方）と異なる商品がすでにリストにあります</span>' +
       '<span class="count">' + clientItemMatches.length + ' 件</span>' +
     '</div>';
     html += '<div class="csv-review-list">' + clientItemMatches.map(function (m, i) {
@@ -2055,6 +2088,9 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
               '<span>&rarr;</span>' +
               '<span class="csv-review-new">' + fmtYen(m.newPrice) + '</span>' +
             '</div>' +
+            '<div class="csv-review-jan">' + (m.usedFixed
+              ? '固定価格 ' + fmtYen(m.fixedPrice) + ' が相場計算 ' + (m.calcPrice != null ? fmtYen(m.calcPrice) : '—') + ' 以上のため固定価格を採用'
+              : '相場計算 ' + fmtYen(m.calcPrice) + ' の方が固定価格 ' + fmtYen(m.fixedPrice) + ' より高いため相場計算を採用') + '</div>' +
           '</div>' +
         '</label>'
       );
@@ -2079,18 +2115,28 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       });
       if (!toApply.length) return;
       applyBtn.disabled = true;
-      var cNow = currentClient();
-      Promise.all(toApply.map(function (m) {
-        return state.db.collection('items').doc(m.itemId).update({
-          proposalPriceJPY: m.newPrice,
-          clientId: cNow ? cNow.id : '',
-          clientName: cNow ? cNow.name : '',
-          updatedAt: new Date().toISOString()
-        }).catch(function () {});
-      })).then(function () {
+      applyClientItemMatches(toApply).then(function () {
         showSyncNote(toApply.length + '件の商品リストの価格を更新しました');
       });
     });
+  }
+
+  // 固定価格／相場計算（高い方）の結果を商品リストに反映する。固定価格が採用
+  // された商品にだけ取引先名の「固定」表示を付け、相場計算が採用された商品
+  // では（この取引先の）固定表示を外す。
+  function applyClientItemMatches(list) {
+    var cNow = currentClient();
+    return Promise.all(list.map(function (m) {
+      var upd = { proposalPriceJPY: m.newPrice, updatedAt: new Date().toISOString() };
+      if (m.usedFixed) {
+        upd.clientId = cNow ? cNow.id : '';
+        upd.clientName = cNow ? cNow.name : '';
+      } else if (cNow && m.itemClientId === cNow.id) {
+        upd.clientId = '';
+        upd.clientName = '';
+      }
+      return state.db.collection('items').doc(m.itemId).update(upd).catch(function () {});
+    }));
   }
 
   function renderClientManageList() {
@@ -2332,7 +2378,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var clientOverride = currentMatchedTemplate && state.selectedClientId
       ? findClientPrice(state.selectedClientId, currentMatchedTemplate.id) : null;
     if (clientOverride) {
-      previewValue.textContent = fmtYen(clientOverride.fixedProposalPriceJPY);
+      var effP = clientProposalFor(clientOverride, inBase.value, state.settings.marginPercent, state.settings.fxRate, inRound.checked);
+      previewValue.textContent = fmtYen(effP.value);
       renderPrevPriceInfo();
       return;
     }
@@ -2357,7 +2404,11 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       ? findClientPrice(state.selectedClientId, currentMatchedTemplate.id) : null;
     if (clientOverride) {
       var c = currentClient();
-      prevBaseHint.textContent = (c ? c.name : 'この取引先') + '向けの固定価格です（相場・計算後の価格は変更されません）';
+      var effH = clientProposalFor(clientOverride, inBase.value, state.settings.marginPercent, state.settings.fxRate, inRound.checked);
+      var cn = c ? c.name : 'この取引先';
+      if (effH.calc == null) prevBaseHint.textContent = cn + '向けの固定価格 ' + fmtYen(effH.fixed) + '（相場を入力すると、固定価格と相場計算の高い方を自動で採用します）';
+      else if (effH.usedFixed) prevBaseHint.textContent = cn + '向けの固定価格 ' + fmtYen(effH.fixed) + ' を採用（相場計算 ' + fmtYen(effH.calc) + ' 以上のため）';
+      else prevBaseHint.textContent = '相場計算 ' + fmtYen(effH.calc) + ' を採用（' + cn + '向けの固定価格 ' + fmtYen(effH.fixed) + ' より高いため）';
       prevProposalValue.innerHTML = '';
       return;
     }
@@ -2774,7 +2825,12 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var margin = state.settings.marginPercent, fx = state.settings.fxRate, round = state.settings.roundTo100;
     if (tmpl) {
       var co = state.selectedClientId ? findClientPrice(state.selectedClientId, tmpl.id) : null;
-      if (co) return { value: co.fixedProposalPriceJPY, note: '取引先の固定価格が適用されます' };
+      if (co) {
+        var e = clientProposalFor(co, base, margin, fx, round);
+        return { value: e.value, note: e.calc == null ? '取引先の固定価格が適用されます'
+          : (e.usedFixed ? '取引先の固定価格 ' + fmtYen(e.fixed) + ' を採用（相場計算 ' + fmtYen(e.calc) + ' 以上）'
+                         : '相場計算 ' + fmtYen(e.calc) + ' を採用（固定価格 ' + fmtYen(e.fixed) + ' より高い）') };
+      }
       if (tmpl.priceFixed) {
         return { value: tmpl.fixedProposalPriceJPY != null ? tmpl.fixedProposalPriceJPY : computeProposal(tmpl.basePriceJPY, margin, fx, round), note: '固定価格の商品です' };
       }
@@ -2992,8 +3048,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var clientOverride = currentMatchedTemplate && state.selectedClientId
       ? findClientPrice(state.selectedClientId, currentMatchedTemplate.id) : null;
     var isClientFixedAdd = clientOverride && currentMatchedTemplate.englishName.toLowerCase() === name.toLowerCase();
+    var clientEff = null;
     if (isClientFixedAdd) {
-      proposal = clientOverride.fixedProposalPriceJPY;
+      clientEff = clientProposalFor(clientOverride, base, margin, fx, round);
+      proposal = clientEff.value;
     }
 
     var data = {
@@ -3010,7 +3068,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       createdAt: new Date().toISOString(),
       sortIndex: Date.now()
     };
-    if (isClientFixedAdd) {
+    if (isClientFixedAdd && clientEff.usedFixed) {
       data.clientId = state.selectedClientId;
       data.clientName = (currentClient() || {}).name || '';
     }
@@ -3147,7 +3205,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
               '<label class="tmpl-fixed-toggle"><input type="checkbox" class="tmpl-client-fixed-check"' + (cp ? ' checked' : '') + '> ' + esc(selClient.name) + '向けに価格を固定する</label>' +
               (cp ?
                 '<div class="tmpl-fixed-fields">' +
-                  '<div class="tmpl-field"><label>' + esc(selClient.name) + '向けの価格 (JPY)</label><input type="number" class="tmpl-client-fixed-price mono" value="' + (cp.fixedProposalPriceJPY != null ? cp.fixedProposalPriceJPY : '') + '" step="1" inputmode="numeric"></div>' +
+                  '<div class="tmpl-field"><label>' + esc(selClient.name) + '向けの固定価格 (JPY)<small style="font-weight:400;color:var(--text-muted)">（相場計算の方が高い時は相場計算を自動採用）</small></label><input type="number" class="tmpl-client-fixed-price mono" value="' + (cp.fixedProposalPriceJPY != null ? cp.fixedProposalPriceJPY : '') + '" step="1" inputmode="numeric"></div>' +
                 '</div>'
               : '') +
             '</div>'
@@ -4297,14 +4355,30 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         var item = state.items.filter(function (it) { return it.id === card.getAttribute('data-id'); })[0] || {};
         var tmpl = state.templates.filter(function (t) { return t.id === slugify(item.englishName || ''); })[0];
         var fixedLabel = '';
-        if (item.clientId && item.clientName) fixedLabel = '「' + item.clientName + '」向けの固定価格';
-        else if (tmpl && tmpl.priceFixed) fixedLabel = '固定価格';
+        var cidForCp = item.clientId || state.selectedClientId;
+        var cpForItem = cidForCp ? findClientPrice(cidForCp, slugify(item.englishName || '')) : null;
         var box = card.querySelector('.e-offer-result');
         if (!box) {
           box = document.createElement('div');
           box.className = 'e-offer-result';
           chip.closest('.scanner-box').appendChild(box);
         }
+        if (cpForItem) {
+          // 取引先ごとの固定価格がある商品は、固定価格と新しい相場の計算価格の
+          // 高い方を自動で入力する（聞き返さない）。
+          var effC = clientProposalFor(cpForItem, base, margin, fx, round);
+          var cl = state.clients.filter(function (x) { return x.id === cidForCp; })[0];
+          var clName = cl ? cl.name : (item.clientName || 'この取引先');
+          propEl.value = effC.value;
+          card.setAttribute('data-client-basis', effC.usedFixed ? 'fixed' : 'calc');
+          card.setAttribute('data-client-id', cidForCp);
+          box.className = 'e-offer-result note';
+          box.textContent = effC.usedFixed
+            ? '「' + clName + '」向けの固定価格 ' + fmtYen(effC.fixed) + ' が相場計算 ' + fmtYen(effC.calc) + ' 以上のため、固定価格 ' + fmtYen(effC.value) + ' を入力しました（保存するまで確定しません）。'
+            : '相場計算 ' + fmtYen(effC.calc) + ' が「' + clName + '」向けの固定価格 ' + fmtYen(effC.fixed) + ' より高いため、相場計算 ' + fmtYen(effC.value) + ' を入力しました（保存するまで確定しません）。';
+          return;
+        }
+        if (tmpl && tmpl.priceFixed) fixedLabel = '固定価格';
         if (!fixedLabel) {
           propEl.value = newProposal;
           box.className = 'e-offer-result note';
@@ -4374,7 +4448,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           ? proposalInput
           : computeProposal(base, margin, fx, round);
         if (state.db) {
-          state.db.collection('items').doc(id).update({
+          var upd = {
             englishName: name,
             japaneseName: nameJa,
             basePriceJPY: base,
@@ -4385,7 +4459,18 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
             roundTo100: round,
             proposalPriceJPY: proposal,
             updatedAt: new Date().toISOString()
-          }).catch(function () { showSyncNote('保存に失敗しました', true); });
+          };
+          // 取引先の固定価格と相場計算の高い方を選んだ場合は、その結果に合わせて
+          // 「◯◯固定」表示も付け外しする。
+          var basis = card.getAttribute('data-client-basis');
+          if (basis === 'fixed') {
+            var bcid = card.getAttribute('data-client-id');
+            var bcl = state.clients.filter(function (x) { return x.id === bcid; })[0];
+            upd.clientId = bcid; upd.clientName = bcl ? bcl.name : '';
+          } else if (basis === 'calc') {
+            upd.clientId = ''; upd.clientName = '';
+          }
+          state.db.collection('items').doc(id).update(upd).catch(function () { showSyncNote('保存に失敗しました', true); });
           upsertTemplate(name, base, margin, fx, round, jan, nameJa);
         }
         state.editingId = null;
@@ -4653,7 +4738,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   function performCopyList() {
     var blocks = state.items.map(function (it) {
       var qty = it.quantity || 1;
-      return it.englishName + '\n' + (it.janCode || '') + '✖️' + qty + '\nJPY' + Math.round(it.proposalPriceJPY);
+      return (displayName(it) || it.englishName) + '\n' + (it.janCode || '') + '✖️' + qty + '\nJPY' + Math.round(it.proposalPriceJPY);
     });
     var text = blocks.join('\n\n');
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -4667,10 +4752,70 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
 
   // CSVの鮮度チェックは送付直前ではなく画面を開いた時点で常に警告バナーとして
   // 表示する（updateCsvStaleWarning）ので、ここは確認なしでそのままコピーする。
+  // ---------- 送付前の最終確認 ----------
+  // 「送付用リストをコピー」を押すと、まずこの確認画面を出す。取引先・各商品の
+  // 提示価格とその根拠（固定価格／相場計算）・価格のズレを一覧で見てから
+  // 「確認しました」を押した時だけコピーする（見落とし防止）。
+  var finalConfirmEl = document.getElementById('finalConfirm');
+  function closeFinalConfirm() { finalConfirmEl.hidden = true; finalConfirmEl.innerHTML = ''; }
+
+  function renderFinalConfirm() {
+    if (finalConfirmEl.hidden) return;
+    if (!state.items.length) { closeFinalConfirm(); return; }
+    var c = currentClient();
+    var mismatches = c ? computeClientItemMatches(c.id) : [];
+    var mismatchIds = {};
+    mismatches.forEach(function (m) { mismatchIds[m.itemId] = m; });
+    var total = 0, totalQty = 0;
+    var rowsHtml = state.items.map(function (it) {
+      var qty = it.quantity || 1;
+      total += Math.round(it.proposalPriceJPY) * qty; totalQty += qty;
+      var tid = slugify(it.englishName);
+      var cp = c ? findClientPrice(c.id, tid) : null;
+      var tmpl = state.templates.filter(function (t) { return t.id === tid; })[0];
+      var basis = '<span class="fc-basis">相場計算</span>';
+      if (mismatchIds[it.id]) basis = '<span class="fc-basis" style="border-color:var(--danger);color:var(--danger)">価格にズレあり</span>';
+      else if (cp) {
+        var e = clientProposalFor(cp, it.basePriceJPY, it.marginPercent, it.fxRate, it.roundTo100);
+        basis = e.usedFixed ? '<span class="fc-basis fixed">' + esc(c.name) + 'の固定価格</span>' : '<span class="fc-basis">相場計算（固定価格より高い）</span>';
+      } else if (tmpl && tmpl.priceFixed) basis = '<span class="fc-basis fixed">固定価格の商品</span>';
+      return '<div class="fc-row"><div class="fc-row-main"><div class="fc-row-name">' + esc(displayName(it) || it.englishName) + '</div>' +
+        '<div class="fc-row-sub">JAN: ' + (it.janCode ? esc(it.janCode) : '—') + ' ／ 数量 ' + qty + '</div>' + basis + '</div>' +
+        '<div class="fc-row-price">' + fmtYen(it.proposalPriceJPY) + '</div></div>';
+    }).join('');
+    var html = '<div class="sc-sheet" role="dialog" aria-modal="true">' +
+      '<div class="sc-title">送付前の最終確認</div>' +
+      '<div class="fc-total" style="text-align:left">コピーする商品名: ' + (state.nameDisplayLang === 'ja' ? '日本語（日本語名が未登録の商品は英語名）' : '英語') + '</div>' +
+      (c ? '<div class="fc-client">取引先: ' + esc(c.name) + '</div>'
+         : '<div class="fc-client none">取引先が選択されていません（取引先ごとの固定価格は反映されていません）</div>');
+    if (mismatches.length) {
+      html += '<div class="fc-warn"><div>' + mismatches.length + '件、' + esc(c.name) + '向けの価格（固定価格と相場計算の高い方）と異なる商品があります。</div>' +
+        '<button type="button" class="btn-primary" id="fcApplyBtn">高い方の価格に更新する（' + mismatches.length + '件）</button></div>';
+    }
+    html += '<div class="fc-list">' + rowsHtml + '</div>' +
+      '<div class="fc-total">' + state.items.length + '商品・合計数量 ' + totalQty + '</div>' +
+      '<div class="fc-btns"><button type="button" class="btn-primary" id="fcOkBtn">確認しました・リストをコピーする</button>' +
+      '<button type="button" class="btn-ghost" id="fcCancelBtn">戻って見直す</button></div></div>';
+    finalConfirmEl.innerHTML = html;
+    document.getElementById('fcOkBtn').addEventListener('click', function () {
+      closeFinalConfirm();
+      performCopyList();
+    });
+    document.getElementById('fcCancelBtn').addEventListener('click', closeFinalConfirm);
+    var ap = document.getElementById('fcApplyBtn');
+    if (ap) ap.addEventListener('click', function () {
+      if (!state.db) { showSyncNote('同期の準備中です。少し待ってからお試しください', true); return; }
+      ap.disabled = true;
+      applyClientItemMatches(mismatches).then(function () { renderFinalConfirm(); });
+    });
+  }
+
   copyBtn.addEventListener('click', function () {
     if (!state.items.length) return;
-    performCopyList();
+    finalConfirmEl.hidden = false;
+    renderFinalConfirm();
   });
+  finalConfirmEl.addEventListener('click', function (e) { if (e.target === finalConfirmEl) closeFinalConfirm(); });
 
   clearListBtn.addEventListener('click', function () {
     if (!state.items.length) {
@@ -4866,6 +5011,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         state.itemsLoaded = true;
         renderList();
         renderClientItemReview();
+        if (typeof renderFinalConfirm === 'function') renderFinalConfirm();
       }, function () {
         state.itemsLoaded = true;
         showSyncNote('リストの読み込みに失敗しました', true);
