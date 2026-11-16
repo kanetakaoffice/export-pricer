@@ -4744,7 +4744,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   function performCopyList() {
     var blocks = state.items.map(function (it) {
       var qty = it.quantity || 1;
-      return (displayName(it) || it.englishName) + '\n' + (it.janCode || '') + '✖️' + qty + '\nJPY' + Math.round(sendPrice(it));
+      return (displayName(it) || it.englishName) + '\n' + (it.janCode || '') + '✖️' + qty + '\n' + (state.nameDisplayLang === 'ja' ? '' : 'JPY') + Math.round(sendPrice(it));
     });
     var text = blocks.join('\n\n');
     if (navigator.clipboard && navigator.clipboard.writeText) {
