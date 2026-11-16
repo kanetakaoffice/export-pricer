@@ -553,6 +553,13 @@
     cursor: pointer;
   }
   .scanner-chip:hover { border-color: var(--accent); color: var(--accent-strong); }
+
+  .e-offer-result { margin-top: 8px; font-size: 12px; line-height: 1.5; }
+  .e-offer-result.note { color: var(--accent-strong); }
+  .e-offer-result.ask { padding: 10px 12px; border: 1px solid var(--accent); border-radius: var(--radius-sm); background: var(--accent-soft); color: var(--text); }
+  .e-offer-ask-btns { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .e-offer-ask-btns .btn-primary { margin-top: 0; padding: 8px 12px; font-size: 13px; }
+  .e-offer-ask-btns .btn-ghost { padding: 8px 12px; font-size: 13px; }
   .scanner-chip.picked { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
   .scanner-box-none { font-size: 11px; color: var(--text-muted); }
 
@@ -4169,10 +4176,10 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         esc(o.shop) + ' &yen;' + Math.round(o.price).toLocaleString('ja-JP') + (i === 0 ? '（最高値）' : '') + '</button>';
     }).join('');
     return '<div class="scanner-box">' +
-      '<div class="scanner-box-head"><span class="scanner-box-label">買取スキャナー各社の価格（押すと上の相場に入ります）' +
+      '<div class="scanner-box-head"><span class="scanner-box-label">買取スキャナー各社の価格' +
         (csvIndexSavedAt ? '<br><small>CSV取り込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '</small>' : '') + '</span></div>' +
       '<div class="scanner-offers">' + chips + '</div>' +
-      '<div class="scanner-box-none" style="margin-top:6px;">相場を選んだあと、提示する価格にも反映したい時は「再計算する」を押してください。</div>' +
+      '<div class="scanner-box-none" style="margin-top:6px;">押すと相場が入り、提示する価格も自動で計算し直されます（固定価格の商品は変更するか確認します）。</div>' +
     '</div>';
   }
 
@@ -4273,8 +4280,58 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     itemList.querySelectorAll('.e-offer-chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
         var card = chip.closest('.item-card');
-        card.querySelector('.e-base').value = parseFloat(chip.getAttribute('data-price'));
+        var base = parseFloat(chip.getAttribute('data-price'));
+        card.querySelector('.e-base').value = base;
         card.querySelectorAll('.e-offer-chip').forEach(function (c) { c.classList.toggle('picked', c === chip); });
+
+        // 相場を変えたら、提示する価格も（マージン・為替・100円丸めの設定で）
+        // 自動で計算し直す。ただし相手企業ごと・商品ごとに金額を固定している
+        // ものは勝手に書き換えず、変更するか固定のままかを選んでもらう。
+        var margin = parseFloat(card.querySelector('.e-margin').value);
+        var fx = parseFloat(card.querySelector('.e-fx').value);
+        var round = card.querySelector('.e-round').checked;
+        if (!isFinite(margin)) margin = 0;
+        if (!isFinite(fx) || fx <= 0) fx = 1;
+        var newProposal = computeProposal(base, margin, fx, round);
+        var propEl = card.querySelector('.e-proposal');
+        var item = state.items.filter(function (it) { return it.id === card.getAttribute('data-id'); })[0] || {};
+        var tmpl = state.templates.filter(function (t) { return t.id === slugify(item.englishName || ''); })[0];
+        var fixedLabel = '';
+        if (item.clientId && item.clientName) fixedLabel = '「' + item.clientName + '」向けの固定価格';
+        else if (tmpl && tmpl.priceFixed) fixedLabel = '固定価格';
+        var box = card.querySelector('.e-offer-result');
+        if (!box) {
+          box = document.createElement('div');
+          box.className = 'e-offer-result';
+          chip.closest('.scanner-box').appendChild(box);
+        }
+        if (!fixedLabel) {
+          propEl.value = newProposal;
+          box.className = 'e-offer-result note';
+          box.textContent = '提示する価格を ' + fmtYen(newProposal) + ' に更新しました（保存するまで確定しません）。';
+          return;
+        }
+        var current = parseFloat(propEl.value);
+        if (isFinite(current) && Math.round(current) === newProposal) {
+          box.className = 'e-offer-result note';
+          box.textContent = '提示する価格は ' + fmtYen(newProposal) + ' のままです（固定価格と同じ金額です）。';
+          return;
+        }
+        box.className = 'e-offer-result ask';
+        box.innerHTML =
+          '<div class="e-offer-ask-text">この商品は' + esc(fixedLabel) + '（現在 ' + fmtYen(isFinite(current) ? current : item.proposalPriceJPY) + '）です。' +
+          '新しい相場から計算した ' + fmtYen(newProposal) + ' に変更しますか？</div>' +
+          '<div class="e-offer-ask-btns"><button type="button" class="btn-primary e-offer-yes">' + fmtYen(newProposal) + ' に変更する</button>' +
+          '<button type="button" class="btn-ghost e-offer-no">固定のまま</button></div>';
+        box.querySelector('.e-offer-yes').addEventListener('click', function () {
+          propEl.value = newProposal;
+          box.className = 'e-offer-result note';
+          box.textContent = '提示する価格を ' + fmtYen(newProposal) + ' に変更しました（保存するまで確定しません）。';
+        });
+        box.querySelector('.e-offer-no').addEventListener('click', function () {
+          box.className = 'e-offer-result note';
+          box.textContent = '提示する価格は ' + fmtYen(isFinite(current) ? current : item.proposalPriceJPY) + ' の固定のままにしました。';
+        });
       });
     });
     itemList.querySelectorAll('.e-recalc').forEach(function (btn) {
