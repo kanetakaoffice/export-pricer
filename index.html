@@ -1560,7 +1560,7 @@
         <span class="chev">&#9656;</span>
       </summary>
       <div class="settings-body csv-body">
-        <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ関連でまだ登録していない商品は新規登録の候補を、③すでに商品リストに追加済みの商品も価格が変わっていれば更新候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
+        <p class="tmpl-hint field full">買取スキャナーからダウンロードしたCSVファイルを選ぶと、①すでに登録済みの商品とJANコードが一致するものは各社の買取価格を比較して相場の更新候補を、②カメラ・レンズ・Apple製品でまだ登録していない商品は新規登録の候補を、③すでに商品リストに追加済みの商品も価格が変わっていれば更新候補を表示します。内容を確認して選んだ分だけ反映されます（自動では変わりません）。</p>
         <div class="field full">
           <input type="file" id="csvFileInput" accept=".csv,text/csv">
         </div>
@@ -2489,6 +2489,11 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     ['フィルム', 'Film'], ['スピードライト', 'Speedlight'],
     ['スタンダードコンボ', 'Standard Combo'], ['コンボ', 'Combo'],
     ['パック', 'Pack'],
+    // Apple製品まわり
+    ['アップル', 'Apple'], ['インチ', '-inch'], ['セルラー', 'Cellular'],
+    ['スペースグレイ', 'Space Gray'], ['スペースグレー', 'Space Gray'], ['スペースブラック', 'Space Black'],
+    ['ミッドナイト', 'Midnight'], ['スターライト', 'Starlight'], ['ローズゴールド', 'Rose Gold'],
+    ['ゴールド', 'Gold'], ['ピンク', 'Pink'], ['グリーン', 'Green'], ['パープル', 'Purple'], ['イエロー', 'Yellow'],
     // Colors — compound shades before the base color they contain.
     ['ジェットブラック', 'Jet Black'], ['チャコールシルバー', 'Charcoal Silver'],
     ['ダークシルバー', 'Dark Silver'], ['クレイホワイト', 'Clay White'],
@@ -3306,8 +3311,13 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   // mentions カメラ or レンズ — this is what keeps the "new product" candidate
   // list from including the CSV's thousands of unrelated rows (furniture,
   // watches, cookware, etc.).
-  function isCameraCategory(row, catIdxs) {
-    return catIdxs.some(function (ci) { return /カメラ|レンズ/.test(row[ci] || ''); });
+  // Apple製品（iPad・iPhone・MacBook・AirPods・Apple Watch など）も対象。
+  // カテゴリ列は「タブレット」「スマートフォン」など他社製品と共通なので、
+  // Apple製品かどうかは商品名・カテゴリ内の名称で判定する。
+  var APPLE_PRODUCT_RE = /Apple|アップル|iPad|iPhone|iPod|MacBook|iMac|Mac\s?mini|Mac\s?Studio|Mac\s?Pro|AirPods|AirTag|アイパッド|アイフォン|エアポッズ|マックブック/i;
+  function isCameraCategory(row, catIdxs, nameIdxs) {
+    if (catIdxs.some(function (ci) { return /カメラ|レンズ/.test(row[ci] || '') || APPLE_PRODUCT_RE.test(row[ci] || ''); })) return true;
+    return (nameIdxs || []).some(function (ni) { return APPLE_PRODUCT_RE.test(row[ni] || ''); });
   }
 
   function firstNonEmpty(row, idxs) {
@@ -3508,7 +3518,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       });
       if (namesForRow.length) newNameIndex[jan] = namesForRow;
 
-      var isCam = isCameraCategory(row, meta.catIdxs);
+      var isCam = isCameraCategory(row, meta.catIdxs, meta.nameIdxs);
       if (isCam) {
         sharedIndex[jan] = top5;
         if (namesForRow.length) sharedNameIndex[jan] = namesForRow;
@@ -3574,7 +3584,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     summaryParts.push((rows.length - 1) + '行を確認しました');
     summaryParts.push('相場の更新候補: ' + matches.length + '件');
     summaryParts.push('商品リストの価格更新候補: ' + itemMatches.length + '件');
-    summaryParts.push('新規登録の候補（カメラ・レンズ関連）: ' + newCandidates.length + '件');
+    summaryParts.push('新規登録の候補（カメラ・レンズ・Apple製品）: ' + newCandidates.length + '件');
     setCsvStatus(summaryParts.join(' ／ '));
 
     renderCsvReview();
@@ -3754,7 +3764,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     var shown = filtered.slice(0, CSV_NEW_DISPLAY_CAP);
 
     var html = '<div class="csv-new-section">';
-    html += '<div class="csv-new-summary">新規登録の候補: ' + csvNewCandidates.length + '件（カメラ・レンズ関連で、まだ登録していない商品）。商品名やJANコードで絞り込んでから、英語の商品名を入力して登録してください。</div>';
+    html += '<div class="csv-new-summary">新規登録の候補: ' + csvNewCandidates.length + '件（カメラ・レンズ・Apple製品で、まだ登録していない商品）。商品名やJANコードで絞り込んでから、英語の商品名を入力して登録してください。</div>';
     html += '<input type="text" class="csv-new-search" id="csvNewSearch" placeholder="商品名やJANコードで検索（例：EOS R5, シグマ）" value="' + esc(csvNewSearchTerm) + '">';
 
     if (!term) {
