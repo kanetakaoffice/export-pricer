@@ -555,6 +555,45 @@
   .scanner-chip:hover { border-color: var(--accent); color: var(--accent-strong); }
   .scanner-box-none { font-size: 11px; color: var(--text-muted); }
 
+
+  /* ---------- JANバーコード読み取り ---------- */
+  .jan-input-row { display: flex; gap: 8px; align-items: stretch; }
+  .jan-input-row input { flex: 1; min-width: 0; }
+  .jan-scan-btn {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--accent); color: var(--accent-contrast);
+    border: none; border-radius: var(--radius-sm);
+    padding: 0 12px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .jan-scan-btn svg { width: 18px; height: 18px; }
+  .jan-scan-note {
+    font-size: 12px; line-height: 1.5; padding: 8px 10px; margin-top: 6px;
+    border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border-soft);
+    color: var(--text);
+  }
+  .jan-scan-note.ok { border-color: var(--accent); }
+  .jan-scan-note.warn { border-color: var(--danger); color: var(--danger); }
+  .jan-scan-note[hidden] { display: none; }
+  .scan-overlay {
+    position: fixed; inset: 0; z-index: 3000; background: #000; color: #fff;
+    display: flex; flex-direction: column;
+  }
+  .scan-overlay[hidden] { display: none; }
+  .scan-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; font-size: 14px; }
+  .scan-close {
+    appearance: none; border: 1px solid rgba(255,255,255,.5); background: transparent; color: #fff;
+    border-radius: 8px; padding: 8px 14px; font-size: 14px; cursor: pointer;
+  }
+  .scan-stage { position: relative; flex: 1; min-height: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .scan-stage video { width: 100%; height: 100%; object-fit: cover; }
+  .scan-frame {
+    position: absolute; left: 8%; right: 8%; top: 50%; height: 28%; transform: translateY(-50%);
+    border: 3px solid rgba(255,255,255,.9); border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,.45);
+    pointer-events: none;
+  }
+  .scan-status { padding: 14px 16px 22px; font-size: 13px; text-align: center; min-height: 20px; }
+
   .jan-name-box {
     background: var(--surface-2);
     border: 1px solid var(--border-soft);
@@ -1235,6 +1274,12 @@
 </head>
 <body>
 
+<div class="scan-overlay" id="scanOverlay" hidden>
+  <div class="scan-top"><span>バーコードを枠の中に合わせてください</span><button type="button" class="scan-close" id="scanCloseBtn">閉じる</button></div>
+  <div class="scan-stage"><video id="scanVideo" playsinline muted autoplay></video><div class="scan-frame"></div></div>
+  <div class="scan-status" id="scanStatus"></div>
+</div>
+
 <div id="pullRefreshIndicator" class="pull-refresh-indicator">↓ 引っ張って更新</div>
 
 <div class="app">
@@ -1353,7 +1398,14 @@
           </div>
           <div class="field full">
             <label for="inJan">JANコード（任意）</label>
-            <input type="text" id="inJan" inputmode="numeric" placeholder="4549292157345">
+            <div class="jan-input-row">
+              <input type="text" id="inJan" inputmode="numeric" placeholder="4549292157345">
+              <button type="button" class="jan-scan-btn" id="janScanBtn" aria-label="カメラでバーコードを読み取る">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 9v6M11 9v6M14 9v6M17 9v6"/></svg>
+                読み取る
+              </button>
+            </div>
+            <div class="jan-scan-note" id="janScanNote" hidden></div>
           </div>
           <div class="field full" id="janNameBox"></div>
           <div class="field full" id="scannerPriceBox"></div>
@@ -1959,6 +2011,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
       inQty.value = 1;
       inJan.value = '';
       inNameJa.value = '';
+      setJanScanNote('');
       currentMatchedTemplate = null;
       updatePreview();
       renderScannerPriceBox();
@@ -2396,6 +2449,193 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     });
   }
 
+  // ---------- JANバーコードをカメラで読み取って自動入力 ----------
+  // 対応ブラウザ（Android Chromeなど）は端末標準のBarcodeDetectorを使い、
+  // 非対応（iPhoneのSafariなど）は ZXing ライブラリを初回だけ読み込んで使う。
+  // 読み取ったJANは、①登録済みの商品→名前・価格を入れる ②買取スキャナーCSVに
+  // ある→日本語名・英語名の推測・最高値を入れる ③どこにも無い→JANだけ入れて
+  // 商品名・相場の入力を促す。（追加すると登録されるので次回からは①になる）
+  var ZXING_URL = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+  var janScanBtn = document.getElementById('janScanBtn');
+  var janScanNote = document.getElementById('janScanNote');
+  var scanOverlay = document.getElementById('scanOverlay');
+  var scanVideo = document.getElementById('scanVideo');
+  var scanStatus = document.getElementById('scanStatus');
+  var scanCloseBtn = document.getElementById('scanCloseBtn');
+  var scanSession = null; // { stream, timer, reader, done }
+  var zxingPromise = null;
+
+  function setJanScanNote(html, kind) {
+    if (!html) { janScanNote.hidden = true; janScanNote.innerHTML = ''; janScanNote.className = 'jan-scan-note'; return; }
+    janScanNote.innerHTML = html;
+    janScanNote.className = 'jan-scan-note' + (kind ? ' ' + kind : '');
+    janScanNote.hidden = false;
+  }
+
+  function normalizeScannedCode(raw) {
+    var d = String(raw || '').replace(/\D/g, '');
+    if (d.length === 12) d = '0' + d; // UPC-A → EAN-13
+    if (d.length !== 13 && d.length !== 8) return '';
+    var sum = 0;
+    for (var i = 0; i < d.length - 1; i++) {
+      var digit = parseInt(d.charAt(d.length - 2 - i), 10);
+      sum += digit * (i % 2 === 0 ? 3 : 1);
+    }
+    var check = (10 - (sum % 10)) % 10;
+    return check === parseInt(d.charAt(d.length - 1), 10) ? d : '';
+  }
+
+  function loadZxing() {
+    if (window.ZXing) return Promise.resolve();
+    if (zxingPromise) return zxingPromise;
+    zxingPromise = new Promise(function (resolve, reject) {
+      var sc = document.createElement('script');
+      sc.src = ZXING_URL;
+      sc.onload = function () { resolve(); };
+      sc.onerror = function () { zxingPromise = null; reject(new Error('zxing load failed')); };
+      document.head.appendChild(sc);
+    });
+    return zxingPromise;
+  }
+
+  function stopScanner() {
+    var sess = scanSession;
+    scanSession = null;
+    if (sess) {
+      sess.done = true;
+      if (sess.timer) clearInterval(sess.timer);
+      try { if (sess.reader) sess.reader.reset(); } catch (e) {}
+      try { if (sess.stream) sess.stream.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    }
+    try { var so = scanVideo.srcObject; if (so && so.getTracks) so.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+    scanVideo.srcObject = null;
+    scanOverlay.hidden = true;
+  }
+
+  function onScanned(sess, raw) {
+    if (sess.done) return;
+    var code = normalizeScannedCode(raw);
+    if (!code) return; // 読み間違い（チェックデジット不一致）は無視して読み続ける
+    stopScanner();
+    try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+    applyScannedJan(code);
+  }
+
+  function openScanner() {
+    if (scanSession) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setJanScanNote('この環境ではカメラを使えません（https:// で開いている必要があります）。', 'warn');
+      return;
+    }
+    scanOverlay.hidden = false;
+    scanStatus.textContent = 'カメラを起動しています…';
+    var sess = { stream: null, timer: null, reader: null, done: false };
+    scanSession = sess;
+    var constraints = { audio: false, video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+
+    var detector = null;
+    if (window.BarcodeDetector) {
+      try { detector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a'] }); } catch (e) { detector = null; }
+    }
+
+    function fail(err) {
+      if (sess.done) return;
+      var denied = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+      scanStatus.textContent = denied
+        ? 'カメラの使用が許可されていません。ブラウザ（端末）の設定でカメラを許可してください。'
+        : 'カメラを起動できませんでした。手入力でJANコードを入れてください。';
+    }
+
+    if (detector) {
+      navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+        if (sess.done) { stream.getTracks().forEach(function (t) { t.stop(); }); return; }
+        sess.stream = stream;
+        scanVideo.srcObject = stream;
+        var p = scanVideo.play(); if (p && p.catch) p.catch(function () {});
+        scanStatus.textContent = 'バーコードを探しています…';
+        var busy = false;
+        sess.timer = setInterval(function () {
+          if (busy || sess.done) return;
+          busy = true;
+          detector.detect(scanVideo).then(function (codes) {
+            busy = false;
+            if (codes && codes.length) onScanned(sess, codes[0].rawValue);
+          }).catch(function () { busy = false; });
+        }, 150);
+      }).catch(fail);
+    } else {
+      loadZxing().then(function () {
+        if (sess.done) return;
+        var Z = window.ZXing;
+        var hints = new Map();
+        hints.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A]);
+        var reader = new Z.BrowserMultiFormatReader(hints, 200);
+        sess.reader = reader;
+        scanStatus.textContent = 'バーコードを探しています…';
+        return reader.decodeFromConstraints(constraints, scanVideo, function (result) {
+          if (result) onScanned(sess, result.getText());
+        });
+      }).catch(function (err) {
+        if (err && err.message === 'zxing load failed') {
+          if (!sess.done) scanStatus.textContent = '読み取り機能の読み込みに失敗しました。通信状況を確認してください。';
+        } else {
+          fail(err);
+        }
+      });
+    }
+  }
+
+  function applyScannedJan(jan) {
+    // 前の商品の入力が残っていると混ざるので、読み取るたびに入力欄を空にしてから入れる。
+    inName.value = '';
+    inNameJa.value = '';
+    inBase.value = '';
+    inQty.value = '1';
+    currentMatchedTemplate = null;
+    hideNameSuggestions();
+    inJan.value = jan;
+
+    var tmpl = state.templates.filter(function (t) { return (t.janCode || '').trim() === jan; })[0];
+    if (tmpl) {
+      inName.value = tmpl.englishName;
+      inName.dispatchEvent(new Event('input')); // 価格・日本語名・商品の紐づけは入力欄の処理に任せる
+      hideNameSuggestions();
+      updatePreview();
+      renderScannerPriceBox();
+      renderJanNameBox();
+      setJanScanNote('<b>' + esc(jan) + '</b> を読み取りました。登録済みの商品の名前と価格を入れました。', 'ok');
+      return;
+    }
+
+    var refNames = csvNameByJan[jan];
+    var offers = csvIndexByJan[jan];
+    var hasRef = !!(refNames && refNames.length);
+    var hasOffer = !!(offers && offers.length);
+    if (hasRef) {
+      var best = pickBestName(refNames);
+      inName.value = guessEnglishName(best);
+      inNameJa.value = best;
+    }
+    if (hasOffer) inBase.value = offers[0].price;
+    updatePreview();
+    renderScannerPriceBox();
+    renderJanNameBox();
+
+    if (hasRef || hasOffer) {
+      setJanScanNote('<b>' + esc(jan) + '</b> を読み取りました。未登録の商品なので、買取スキャナーのCSVから' +
+        (hasRef ? '商品名（英語名は自動の推測です。必ず確認・修正してください）' : '') +
+        (hasRef && hasOffer ? 'と' : '') + (hasOffer ? '相場（最高値）' : '') + 'を入れました。', 'ok');
+    } else {
+      setJanScanNote('<b>' + esc(jan) + '</b> を読み取りました。未登録の商品で、買取スキャナーのCSVにも見つかりませんでした。商品名と相場を入力してください（追加すると登録され、次回から自動で入ります）。', 'warn');
+      inName.focus();
+    }
+  }
+
+  janScanBtn.addEventListener('click', openScanner);
+  scanCloseBtn.addEventListener('click', stopScanner);
+  document.addEventListener('visibilitychange', function () { if (document.hidden && scanSession) stopScanner(); });
+  inJan.addEventListener('input', function () { setJanScanNote(''); });
+
   addBtn.addEventListener('click', function () {
     var name = inName.value.trim();
     var base = parseFloat(inBase.value);
@@ -2467,6 +2707,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     inBase.value = '';
     inQty.value = '1';
     inJan.value = '';
+    setJanScanNote('');
     addFormTouched = false;
     currentMatchedTemplate = null;
     inRound.checked = !!state.settings.roundTo100;
