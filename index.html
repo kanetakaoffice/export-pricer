@@ -562,6 +562,21 @@
   .e-offer-ask-btns .btn-ghost { padding: 8px 12px; font-size: 13px; }
   .scanner-chip.picked { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
   .scanner-box-none { font-size: 11px; color: var(--text-muted); }
+  /* 商品リスト：各社の相場表示・価格変化のお知らせ */
+  .offer-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 4px; }
+  .offer-bar .btn-ghost { padding: 6px 12px; font-size: 12.5px; }
+  .offer-bar .btn-ghost.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-strong); font-weight: 600; }
+  .offer-bar .changed-chip { border-color: var(--danger); color: var(--danger); }
+  .offer-bar .changed-chip.on { background: var(--danger); color: #fff; }
+  .offer-bar-note { font-size: 11px; color: var(--text-muted); }
+  .offer-change { margin-top: 8px; font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid; }
+  .offer-change.up { color: #1f7a3d; border-color: #1f7a3d; background: rgba(31,122,61,.08); }
+  .offer-change.down { color: var(--danger); border-color: var(--danger); background: rgba(180,40,40,.07); }
+  .card-offers { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+  .card-offers .scanner-chip.cur { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+  .card-offers .scanner-chip.best::after { content: ' ★'; }
+  .card-offer-confirm { margin-top: 8px; padding: 10px 12px; border: 1px solid var(--accent); border-radius: var(--radius-sm); background: var(--accent-soft); font-size: 12.5px; line-height: 1.55; }
+  .card-offer-confirm .btns { display: flex; gap: 8px; margin-top: 8px; }
 
 
 
@@ -1489,6 +1504,7 @@
               <button class="btn-ghost" id="clearNoBtn">キャンセル</button>
             </div>
           </div>
+          <div class="offer-bar" id="offerBar"></div>
           <div class="item-list" id="itemList"></div>
           <div class="sync-note" id="syncNote"></div>
         </div>
@@ -1686,6 +1702,9 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     // 商品名の表示言語（'en' | 'ja'）。データ自体（englishName）は常に請求書用の
     // 英語名のまま——これは画面上の見え方だけを切り替える設定。
     nameDisplayLang: 'en',
+    showOffers: false,
+    onlyChanged: false,
+    pendingOffer: null,
     // 長押しドラッグで並び替え中は、Firebaseからの再同期で一覧の再描画が走って
     // ドラッグ中のDOM操作を壊してしまわないよう、この間だけrenderList()を
     // スキップする。
@@ -1715,6 +1734,8 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     try { localStorage.setItem(NAME_LANG_STORAGE_KEY, lang); } catch (e) {}
   }
   state.nameDisplayLang = loadNameDisplayLang();
+  var SHOW_OFFERS_KEY = 'exportPricer.showOffers';
+  try { state.showOffers = localStorage.getItem(SHOW_OFFERS_KEY) === '1'; } catch (e) {}
 
   // 商品名の画面表示用のヘルパー。データとしては常に englishName が正（請求書・
   // パッキングリストや商品の照合はすべて英語名基準のまま）——表示言語が「日本語」
@@ -3657,6 +3678,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     renderCsvNewSection();
     renderScannerPriceBox();
     renderJanNameBox();
+    if (!state.editingId) renderList();
   }
 
   function renderCsvReview() {
@@ -4209,11 +4231,103 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
     }
     itemCount.textContent = state.items.length + ' 件';
     if (state.items.length === 0) {
+      var ob = document.getElementById('offerBar'); if (ob) ob.innerHTML = '';
       itemList.innerHTML = '<div class="empty-state"><span class="glyph">&#128247;</span>まだ商品がありません。上のフォームから追加してください。</div>';
       return;
     }
-    itemList.innerHTML = state.items.map(renderItemCard).join('');
+    renderOfferBar();
+    var shown = state.items;
+    if (state.onlyChanged) {
+      shown = state.items.filter(function (it) { return itemOfferStatus(it).changed || it.id === state.editingId; });
+      if (!shown.length) { state.onlyChanged = false; shown = state.items; renderOfferBar(); }
+    }
+    itemList.innerHTML = shown.map(renderItemCard).join('');
     bindItemEvents();
+  }
+
+  // ---------- 商品リスト：各社の相場表示と価格変化のチェック ----------
+  // リストに入れた時の相場（basePriceJPY）が、いま読み込んでいるCSVの各社価格の
+  // どれとも一致しなくなっていたら「価格が変わった」と見なす。
+  function itemOfferStatus(item) {
+    var jan = (item.janCode || '').trim();
+    var idx = csvIndexByJan || {};
+    var offers = jan ? idx[jan] : null;
+    if (!offers || !offers.length) return { offers: null, changed: false };
+    var base = Math.round(Number(item.basePriceJPY) || 0);
+    var hit = offers.some(function (o) { return Math.round(o.price) === base; });
+    var best = offers[0].price;
+    return { offers: offers, changed: !hit, best: best, diff: Math.round(best - base) };
+  }
+
+  function renderOfferBar() {
+    var bar = document.getElementById('offerBar');
+    if (!bar) return;
+    if (!state.items.length) { bar.innerHTML = ''; return; }
+    var hasCsv = Object.keys(csvIndexByJan || {}).length > 0;
+    if (!hasCsv) { bar.innerHTML = '<span class="offer-bar-note">買取スキャナーのCSVを読み込むと、各社の相場と価格の変化をここで確認できます。</span>'; return; }
+    var changedN = state.items.filter(function (it) { return itemOfferStatus(it).changed; }).length;
+    bar.innerHTML =
+      '<button type="button" class="btn-ghost' + (state.showOffers ? ' on' : '') + '" id="offerToggleBtn">' +
+        (state.showOffers ? '各社の相場を閉じる' : '各社の相場を表示') + '</button>' +
+      (changedN
+        ? '<button type="button" class="btn-ghost changed-chip' + (state.onlyChanged ? ' on' : '') + '" id="offerChangedBtn">価格が変わった商品: ' + changedN + '件' + (state.onlyChanged ? '（全て表示に戻す）' : '（絞り込む）') + '</button>'
+        : '<span class="offer-bar-note">リストの商品に価格の変化はありません' + (csvIndexSavedAt ? '（CSV取り込み: ' + fmtCsvSavedAt(csvIndexSavedAt) + '）' : '') + '</span>');
+    if (state.showOffers || state.onlyChanged) bar.insertAdjacentHTML('beforeend', '<div class="offer-bar-note" style="width:100%">★は最高値、色付きはいまリストに入っている相場です。押すとその相場に更新できます（確認画面が出ます）。' + (csvIndexSavedAt ? ' CSV取り込み: ' + fmtCsvSavedAt(csvIndexSavedAt) : '') + '</div>');
+    document.getElementById('offerToggleBtn').addEventListener('click', function () {
+      state.showOffers = !state.showOffers;
+      try { localStorage.setItem(SHOW_OFFERS_KEY, state.showOffers ? '1' : '0'); } catch (e) {}
+      renderList();
+    });
+    var cb = document.getElementById('offerChangedBtn');
+    if (cb) cb.addEventListener('click', function () { state.onlyChanged = !state.onlyChanged; renderList(); });
+  }
+
+  // 商品カードの下に出す「価格の変化」と「各社の相場（全社）」。
+  function renderCardOffers(item) {
+    var st = itemOfferStatus(item);
+    var html = '';
+    if (st.changed) {
+      var up = st.diff > 0;
+      html += '<div class="offer-change ' + (up ? 'up' : 'down') + '">' + (up ? '▲' : '▼') + ' 価格が変わっています：リストの相場 ' + fmtYen(item.basePriceJPY) +
+        ' → 現在の最高値 ' + fmtYen(st.best) + '（' + (up ? '+' : '−') + Math.abs(st.diff).toLocaleString('ja-JP') + '円）</div>';
+    }
+    var pend = state.pendingOffer && state.pendingOffer.itemId === item.id ? state.pendingOffer : null;
+    var expand = state.showOffers || state.onlyChanged || pend;
+    if (expand) {
+      var jan = (item.janCode || '').trim();
+      if (!jan) html += '<div class="card-offers"><div class="scanner-box-none">JANコードが未登録のため、各社の相場は表示できません。</div></div>';
+      else if (!st.offers) html += '<div class="card-offers"><div class="scanner-box-none">このJANコードの買取スキャナー価格は見つかりませんでした。</div></div>';
+      else {
+        var base = Math.round(Number(item.basePriceJPY) || 0);
+        html += '<div class="card-offers"><div class="scanner-offers">' + st.offers.map(function (o, i) {
+          return '<button type="button" class="scanner-chip c-offer-chip' + (Math.round(o.price) === base ? ' cur' : '') + (i === 0 ? ' best' : '') + '" data-shop="' + esc(o.shop) + '" data-price="' + o.price + '">' +
+            esc(o.shop) + ' &yen;' + Math.round(o.price).toLocaleString('ja-JP') + '</button>';
+        }).join('') + '</div></div>';
+      }
+    }
+    if (pend) {
+      var np = proposalAfterOffer(item, pend.price);
+      html += '<div class="card-offer-confirm">「' + esc(pend.shop) + '」の ' + fmtYen(pend.price) + ' に更新しますか？<br>' +
+        '相場: ' + fmtYen(item.basePriceJPY) + ' → <b>' + fmtYen(pend.price) + '</b>　／　提示価格: ' + fmtYen(item.proposalPriceJPY) + ' → <b>' + fmtYen(np.value) + '</b>' +
+        (np.note ? '<br><small>' + esc(np.note) + '</small>' : '') +
+        '<div class="btns"><button type="button" class="btn-primary c-offer-yes">更新する</button><button type="button" class="btn-ghost c-offer-no">やめる</button></div></div>';
+    }
+    return html;
+  }
+
+  // 相場を変えた時の提示価格。取引先の固定価格があれば「高い方」、商品自体が
+  // 固定なら今の提示価格のまま、それ以外は設定どおりに計算する。
+  function proposalAfterOffer(item, price) {
+    var tid = slugify(item.englishName || '');
+    var cid = item.clientId || state.selectedClientId;
+    var cp = cid ? findClientPrice(cid, tid) : null;
+    if (cp) {
+      var e = clientProposalFor(cp, price, item.marginPercent, item.fxRate, item.roundTo100);
+      return { value: e.value, usedFixed: e.usedFixed, clientId: cid, note: e.usedFixed ? '取引先の固定価格が高いため固定価格を採用' : '相場計算の方が高いため相場計算を採用' };
+    }
+    var tmpl = state.templates.filter(function (t) { return t.id === tid; })[0];
+    if (tmpl && tmpl.priceFixed) return { value: item.proposalPriceJPY, note: '固定価格の商品のため提示価格は変わりません' };
+    return { value: computeProposal(price, item.marginPercent, item.fxRate, item.roundTo100), note: '' };
   }
 
   // 編集画面に、そのJANコードの買取スキャナー（各社）の価格を出す。
@@ -4293,6 +4407,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
           '<span>' + Number(item.fxRate).toFixed(3) + '</span>' +
           (item.roundTo100 ? '<span class="op">&rarr;</span><span>100円丸め</span>' : '') +
         '</div>' +
+        renderCardOffers(item) +
         (confirming ?
           '<div class="confirm-row"><span>この商品を削除しますか？</span><div class="btns">' +
             '<button class="btn-danger d-yes">削除する</button>' +
@@ -4306,6 +4421,36 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
   }
 
   function bindItemEvents() {
+    itemList.querySelectorAll('.c-offer-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var id = chip.closest('.item-card').getAttribute('data-id');
+        state.pendingOffer = { itemId: id, shop: chip.getAttribute('data-shop'), price: parseFloat(chip.getAttribute('data-price')) };
+        renderList();
+      });
+    });
+    itemList.querySelectorAll('.c-offer-no').forEach(function (btn) {
+      btn.addEventListener('click', function () { state.pendingOffer = null; renderList(); });
+    });
+    itemList.querySelectorAll('.c-offer-yes').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var po = state.pendingOffer;
+        var item = po && state.items.filter(function (it) { return it.id === po.itemId; })[0];
+        if (!item) { state.pendingOffer = null; renderList(); return; }
+        if (!state.db) { showSyncNote('同期の準備中です。少し待ってからお試しください', true); return; }
+        var np = proposalAfterOffer(item, po.price);
+        var upd = { basePriceJPY: po.price, proposalPriceJPY: np.value, updatedAt: new Date().toISOString() };
+        if (np.clientId) {
+          var cl = state.clients.filter(function (x) { return x.id === np.clientId; })[0];
+          if (np.usedFixed) { upd.clientId = np.clientId; upd.clientName = cl ? cl.name : ''; }
+          else if (item.clientId === np.clientId) { upd.clientId = ''; upd.clientName = ''; }
+        }
+        state.pendingOffer = null;
+        state.db.collection('items').doc(item.id).update(upd)
+          .then(function () { showSyncNote('「' + (displayName(item) || item.englishName) + '」の相場を ' + fmtYen(po.price) + ' に更新しました'); })
+          .catch(function () { showSyncNote('更新に失敗しました', true); });
+        upsertTemplate(item.englishName, po.price, item.marginPercent, item.fxRate, item.roundTo100, item.janCode, item.japaneseName);
+      });
+    });
     itemList.querySelectorAll('.i-edit').forEach(function (btn) {
       btn.addEventListener('click', function () {
         state.editingId = btn.closest('.item-card').getAttribute('data-id');
@@ -5104,6 +5249,7 @@ Sony FE 50mm F1.2 GM	160000"></textarea>
         renderScannerPriceBox();
         renderJanNameBox();
         updateCsvStaleWarning();
+        if (!state.editingId && state.itemsLoaded) renderList();
       }, function () { /* no shared data yet, or offline — local copy still works */ });
   }
 
